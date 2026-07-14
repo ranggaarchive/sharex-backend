@@ -43,6 +43,27 @@ async function register({ email, password }) {
 }
 
 /**
+ * Helper to check and enforce plan expiration.
+ */
+async function enforcePlanExpiration(user) {
+  if (user.plan !== 'FREE' && user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) {
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: 'FREE' },
+      select: {
+        id: true,
+        email: true,
+        plan: true,
+        role: true,
+        planExpiresAt: true,
+      }
+    });
+    return updatedUser;
+  }
+  return user;
+}
+
+/**
  * Login an existing user.
  */
 async function login({ email, password, deviceId }) {
@@ -50,7 +71,7 @@ async function login({ email, password, deviceId }) {
     throw new BadRequestError('Email and password are required');
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     throw new UnauthorizedError('Invalid email or password');
   }
@@ -66,11 +87,13 @@ async function login({ email, password, deviceId }) {
 
   // Bind device if provided
   if (deviceId) {
-    await prisma.user.update({
+    user = await prisma.user.update({
       where: { id: user.id },
       data: { currentDeviceId: deviceId }
     });
   }
+
+  user = await enforcePlanExpiration(user);
 
   const token = generateToken(user);
 
@@ -80,6 +103,7 @@ async function login({ email, password, deviceId }) {
       email: user.email,
       plan: user.plan,
       role: user.role,
+      planExpiresAt: user.planExpiresAt,
     },
     token,
   };
@@ -89,13 +113,14 @@ async function login({ email, password, deviceId }) {
  * Get user profile by ID.
  */
 async function getProfile(userId) {
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       email: true,
       plan: true,
       role: true,
+      planExpiresAt: true,
       isActive: true,
       createdAt: true,
       updatedAt: true,
@@ -105,6 +130,8 @@ async function getProfile(userId) {
   if (!user) {
     throw new UnauthorizedError('User not found');
   }
+
+  user = await enforcePlanExpiration(user);
 
   return user;
 }
