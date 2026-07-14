@@ -104,7 +104,7 @@ async function requestCookies(userId, accountId) {
  * When a user's browser gets fresh cookies from the target site,
  * the extension sends them back to keep the DB updated.
  */
-async function syncCookies(userId, accountId, encryptedCookies) {
+async function syncCookies(userId, accountId, encryptedCookies, encryptedLocalStorage) {
   // Verify user has an active session for this account
   const session = await prisma.session.findFirst({
     where: {
@@ -119,26 +119,31 @@ async function syncCookies(userId, accountId, encryptedCookies) {
     throw new BadRequestError('No active session for this account.');
   }
 
-  // Decrypt the incoming cookies
-  const cookies = decrypt(encryptedCookies);
+  const updateData = {
+    lastCookieSync: new Date(),
+    cookieHealth: 'HEALTHY',
+  };
 
-  if (!cookies || !Array.isArray(cookies) || cookies.length === 0) {
-    throw new BadRequestError('Invalid cookie data.');
+  if (encryptedCookies) {
+    const cookies = decrypt(encryptedCookies);
+    if (cookies && Array.isArray(cookies) && cookies.length > 0) {
+      updateData.cookies = encrypt(cookies);
+    }
   }
 
-  // Re-encrypt and store
-  const encryptedForStorage = encrypt(cookies);
+  if (encryptedLocalStorage) {
+    const lsData = decrypt(encryptedLocalStorage);
+    if (lsData && Array.isArray(lsData) && lsData.length > 0) {
+      updateData.localStorageData = encrypt(lsData);
+    }
+  }
 
   await prisma.account.update({
     where: { id: accountId },
-    data: {
-      cookies: encryptedForStorage,
-      lastCookieSync: new Date(),
-      cookieHealth: 'HEALTHY',
-    },
+    data: updateData,
   });
 
-  logger.info(`Cookies synced: user=${userId}, account=${accountId}, count=${cookies.length}`);
+  logger.info(`Session data synced: user=${userId}, account=${accountId}`);
 
   return { success: true, syncedAt: new Date() };
 }

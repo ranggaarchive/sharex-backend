@@ -41,8 +41,8 @@ router.post('/request', authenticate, cookieLimiter, verifyGuardToken, async (re
 // POST /api/cookies/sync
 router.post('/sync', authenticate, async (req, res, next) => {
   try {
-    const { accountId, encryptedCookies } = req.body;
-    const result = await cookieService.syncCookies(req.user.id, accountId, encryptedCookies);
+    const { accountId, encryptedCookies, encryptedLocalStorage } = req.body;
+    const result = await cookieService.syncCookies(req.user.id, accountId, encryptedCookies, encryptedLocalStorage);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
