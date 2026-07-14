@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "build": "npx prisma generate && npx prisma db push",
+    "build": "node ./node_modules/prisma/build/index.js generate && node ./node_modules/prisma/build/index.js db push",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
