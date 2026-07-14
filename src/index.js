@@ -14,7 +14,7 @@ const adminRoutes = require('./routes/admin.routes');
 const app = express();
 
 // Middleware
-app.use(cors({ origin: config.cors.origin }));
+app.use(cors());
 app.use(express.json());
 app.use(apiLimiter);
 
