@@ -11,9 +11,11 @@ const prisma = new PrismaClient();
  * Creates a session and returns encrypted cookies.
  */
 async function requestCookies(userId, accountId) {
+  const realAccountId = accountId.includes('_clone_') ? accountId.split('_clone_')[0] : accountId;
+
   // 1. Find the account and check health
   const account = await prisma.account.findUnique({
-    where: { id: accountId },
+    where: { id: realAccountId },
     include: { domain: true },
   });
 
@@ -34,7 +36,7 @@ async function requestCookies(userId, accountId) {
   // 2. Check concurrent session limit
   const activeSessions = await prisma.session.count({
     where: {
-      accountId,
+      accountId: realAccountId,
       isActive: true,
       expiresAt: { gt: new Date() },
     },
@@ -63,7 +65,7 @@ async function requestCookies(userId, accountId) {
   const session = await prisma.session.create({
     data: {
       userId,
-      accountId,
+      accountId: realAccountId,
       expiresAt,
     },
   });
@@ -105,11 +107,13 @@ async function requestCookies(userId, accountId) {
  * the extension sends them back to keep the DB updated.
  */
 async function syncCookies(userId, accountId, encryptedCookies, encryptedLocalStorage) {
+  const realAccountId = accountId.includes('_clone_') ? accountId.split('_clone_')[0] : accountId;
+
   // Verify user has an active session for this account
   const session = await prisma.session.findFirst({
     where: {
       userId,
-      accountId,
+      accountId: realAccountId,
       isActive: true,
       expiresAt: { gt: new Date() },
     },
@@ -139,7 +143,7 @@ async function syncCookies(userId, accountId, encryptedCookies, encryptedLocalSt
   }
 
   await prisma.account.update({
-    where: { id: accountId },
+    where: { id: realAccountId },
     data: updateData,
   });
 
@@ -177,7 +181,7 @@ async function releaseSession(userId, sessionId) {
 /**
  * Admin: Create a new account for a domain.
  */
-async function createAccount({ domainId, label, email, password, maxConcurrent, cookies, localStorageData }) {
+async function createAccount({ domainId, label, email, password, maxConcurrent, displayCloneCount, cookies, localStorageData }) {
   const domain = await prisma.domain.findUnique({ where: { id: domainId } });
   if (!domain) throw new NotFoundError('Domain');
 
@@ -192,6 +196,7 @@ async function createAccount({ domainId, label, email, password, maxConcurrent, 
       email,
       password: encryptedPassword,
       maxConcurrent: maxConcurrent || 1,
+      displayCloneCount: displayCloneCount || 1,
       cookies: encryptedCookies,
       localStorageData: encryptedLocalStorage,
       cookieHealth: cookies || localStorageData ? 'HEALTHY' : 'UNKNOWN',
@@ -204,6 +209,10 @@ async function createAccount({ domainId, label, email, password, maxConcurrent, 
  */
 async function updateAccount(id, data) {
   const updateData = { ...data };
+
+  if (data.displayCloneCount) {
+    updateData.displayCloneCount = data.displayCloneCount;
+  }
 
   if (data.password) {
     updateData.password = encrypt(data.password);

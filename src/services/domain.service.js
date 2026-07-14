@@ -14,12 +14,9 @@ async function listDomains(userPlan) {
     where: { isActive: true },
     orderBy: { name: 'asc' },
     include: {
-      _count: {
-        select: {
-          accounts: {
-            where: { isActive: true, cookieHealth: 'HEALTHY' },
-          },
-        },
+      accounts: {
+        where: { isActive: true, cookieHealth: 'HEALTHY' },
+        select: { displayCloneCount: true }
       },
     },
   });
@@ -27,6 +24,8 @@ async function listDomains(userPlan) {
   // Map domains and indicate if user has access
   return domains.map((domain) => {
     const requiredLevel = planHierarchy[domain.requiredPlan] || 0;
+    const availableAccounts = domain.accounts.reduce((sum, acc) => sum + (acc.displayCloneCount || 1), 0);
+    
     return {
       id: domain.id,
       name: domain.name,
@@ -36,7 +35,7 @@ async function listDomains(userPlan) {
       category: domain.category,
       requiredPlan: domain.requiredPlan,
       hasAccess: userLevel >= requiredLevel,
-      availableAccounts: domain._count.accounts,
+      availableAccounts: availableAccounts,
     };
   });
 }
@@ -44,7 +43,7 @@ async function listDomains(userPlan) {
 /**
  * Get accounts for a specific domain.
  */
-async function listAccounts(domainSlug, userPlan) {
+async function listAccounts(domainSlug, userPlan, isAdminView = false) {
   const domain = await prisma.domain.findUnique({
     where: { slug: domainSlug },
   });
@@ -72,6 +71,7 @@ async function listAccounts(domainSlug, userPlan) {
       label: true,
       cookieHealth: true,
       maxConcurrent: true,
+      displayCloneCount: true,
       lastCookieSync: true,
       _count: {
         select: {
@@ -92,15 +92,35 @@ async function listAccounts(domainSlug, userPlan) {
       url: domain.url,
       category: domain.category,
     },
-    accounts: accounts.map((acc) => ({
-      id: acc.id,
-      label: acc.label,
-      health: acc.cookieHealth,
-      activeSessions: acc._count.sessions,
-      maxConcurrent: acc.maxConcurrent,
-      isAvailable: acc.cookieHealth === 'HEALTHY' && acc._count.sessions < acc.maxConcurrent,
-      lastSync: acc.lastCookieSync,
-    })),
+    accounts: accounts.flatMap((acc) => {
+      if (isAdminView) {
+        return [{
+          id: acc.id,
+          label: acc.label,
+          health: acc.cookieHealth,
+          activeSessions: acc._count.sessions,
+          maxConcurrent: acc.maxConcurrent,
+          displayCloneCount: acc.displayCloneCount,
+          isAvailable: acc.cookieHealth === 'HEALTHY' && acc._count.sessions < acc.maxConcurrent,
+          lastSync: acc.lastCookieSync,
+        }];
+      }
+
+      const clones = [];
+      const count = acc.displayCloneCount || 1;
+      for (let i = 1; i <= count; i++) {
+        clones.push({
+          id: count > 1 ? `${acc.id}_clone_${i}` : acc.id,
+          label: count > 1 ? `${acc.label} ${i}` : acc.label,
+          health: acc.cookieHealth,
+          activeSessions: acc._count.sessions,
+          maxConcurrent: acc.maxConcurrent,
+          isAvailable: acc.cookieHealth === 'HEALTHY' && acc._count.sessions < acc.maxConcurrent,
+          lastSync: acc.lastCookieSync,
+        });
+      }
+      return clones;
+    }),
   };
 }
 

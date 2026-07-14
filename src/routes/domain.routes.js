@@ -18,7 +18,8 @@ router.get('/', authenticate, async (req, res, next) => {
 router.get('/:slug/accounts', authenticate, async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const result = await domainService.listAccounts(slug, req.user.plan);
+    const isAdminView = req.user.role === 'ADMIN' && req.query.adminView === 'true';
+    const result = await domainService.listAccounts(slug, req.user.plan, isAdminView);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
