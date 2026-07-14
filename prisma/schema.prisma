@@ -79,6 +79,7 @@ model Account {
   email           String       // login email for the premium account
   password        String       // encrypted password for the premium account
   cookies         Json?        // encrypted cookie array [{name, value, domain, path, ...}]
+  localStorageData Json?       @map("local_storage_data") // encrypted local storage array [{key, value}]
   cookieHealth    CookieHealth @default(UNKNOWN) @map("cookie_health")
   lastHealthCheck DateTime?    @map("last_health_check")
   lastCookieSync  DateTime?    @map("last_cookie_sync")

@@ -75,6 +75,15 @@ async function requestCookies(userId, accountId) {
 
   const encryptedForTransit = encrypt(cookies);
 
+  // Decrypt local storage data if exists
+  let encryptedLocalStorage = null;
+  if (account.localStorageData) {
+    const lsData = typeof account.localStorageData === 'string'
+      ? decrypt(account.localStorageData)
+      : account.localStorageData;
+    encryptedLocalStorage = encrypt(lsData);
+  }
+
   logger.info(`Cookie requested: user=${userId}, account=${accountId}`);
 
   return {
@@ -86,6 +95,7 @@ async function requestCookies(userId, accountId) {
       cookieDomain: account.domain.cookieDomain,
     },
     encryptedCookies: encryptedForTransit,
+    encryptedLocalStorage: encryptedLocalStorage,
   };
 }
 
@@ -162,12 +172,13 @@ async function releaseSession(userId, sessionId) {
 /**
  * Admin: Create a new account for a domain.
  */
-async function createAccount({ domainId, label, email, password, maxConcurrent, cookies }) {
+async function createAccount({ domainId, label, email, password, maxConcurrent, cookies, localStorageData }) {
   const domain = await prisma.domain.findUnique({ where: { id: domainId } });
   if (!domain) throw new NotFoundError('Domain');
 
   const encryptedPassword = encrypt(password);
   const encryptedCookies = cookies ? encrypt(cookies) : null;
+  const encryptedLocalStorage = localStorageData ? encrypt(localStorageData) : null;
 
   return prisma.account.create({
     data: {
@@ -177,7 +188,8 @@ async function createAccount({ domainId, label, email, password, maxConcurrent, 
       password: encryptedPassword,
       maxConcurrent: maxConcurrent || 1,
       cookies: encryptedCookies,
-      cookieHealth: cookies ? 'HEALTHY' : 'UNKNOWN',
+      localStorageData: encryptedLocalStorage,
+      cookieHealth: cookies || localStorageData ? 'HEALTHY' : 'UNKNOWN',
     },
   });
 }
@@ -196,6 +208,11 @@ async function updateAccount(id, data) {
     updateData.cookies = encrypt(data.cookies);
     updateData.cookieHealth = 'HEALTHY';
     updateData.lastCookieSync = new Date();
+  }
+
+  if (data.localStorageData) {
+    updateData.localStorageData = encrypt(data.localStorageData);
+    if (!updateData.cookieHealth) updateData.cookieHealth = 'HEALTHY';
   }
 
   return prisma.account.update({
