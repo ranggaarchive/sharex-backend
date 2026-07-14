@@ -45,7 +45,7 @@ async function register({ email, password }) {
 /**
  * Login an existing user.
  */
-async function login({ email, password }) {
+async function login({ email, password, deviceId }) {
   if (!email || !password) {
     throw new BadRequestError('Email and password are required');
   }
@@ -62,6 +62,14 @@ async function login({ email, password }) {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new UnauthorizedError('Invalid email or password');
+  }
+
+  // Bind device if provided
+  if (deviceId) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { currentDeviceId: deviceId }
+    });
   }
 
   const token = generateToken(user);

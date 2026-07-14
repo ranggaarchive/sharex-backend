@@ -40,11 +40,13 @@ model User {
   email      String   @unique
   password   String   // bcrypt hashed
   licenseKey String?  @unique @map("license_key")
-  role       UserRole @default(USER)
-  plan       Plan     @default(FREE)
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  role            UserRole @default(USER)
+  plan            Plan     @default(FREE)
+  currentDeviceId String?  @map("current_device_id")
+  banWarningCount Int      @default(0) @map("ban_warning_count")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   sessions Session[]
 

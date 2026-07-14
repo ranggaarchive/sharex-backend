@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 /**
  * Authenticate requests using JWT Bearer token.
  */
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -19,6 +19,39 @@ function authenticate(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
+    
+    // Check device binding
+    const deviceId = req.headers['x-device-id'];
+    if (deviceId) {
+      const userRecord = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { currentDeviceId: true, banWarningCount: true, isActive: true }
+      });
+      
+      if (!userRecord || !userRecord.isActive) {
+        return next(new UnauthorizedError('Account is deactivated'));
+      }
+      
+      if (userRecord.currentDeviceId && userRecord.currentDeviceId !== deviceId) {
+        const newCount = userRecord.banWarningCount + 1;
+        const willBan = newCount >= 3;
+        
+        await prisma.user.update({
+          where: { id: decoded.id },
+          data: { 
+            banWarningCount: newCount,
+            isActive: !willBan
+          }
+        });
+        
+        return res.status(403).json({
+          success: false,
+          error: 'DEVICE_MISMATCH',
+          message: willBan ? 'Account banned due to repeated sharing violations' : 'Account accessed from another device. Sharing is prohibited.'
+        });
+      }
+    }
+    
     req.user = decoded;
     next();
   } catch (err) {
