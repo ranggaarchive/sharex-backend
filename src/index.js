@@ -14,6 +14,9 @@ const paymentRoutes = require('./routes/payment.routes');
 
 const app = express();
 
+// Trust proxy for Railway and express-rate-limit
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
