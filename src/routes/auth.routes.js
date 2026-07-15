@@ -4,6 +4,18 @@ const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET /api/auth/version
+router.get('/version', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      minRequiredVersion: "1.1",
+      latestVersion: "1.1",
+      downloadUrl: "/tutorial"
+    }
+  });
+});
+
 // POST /api/auth/register
 router.post('/register', async (req, res, next) => {
   try {
