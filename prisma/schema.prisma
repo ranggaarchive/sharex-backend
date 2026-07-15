@@ -29,6 +29,12 @@ enum CookieHealth {
   UNKNOWN
 }
 
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -49,7 +55,8 @@ model User {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  sessions Session[]
+  sessions     Session[]
+  transactions Transaction[]
 
   @@map("users")
 }
@@ -122,4 +129,23 @@ model GuardHeartbeat {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("guard_heartbeats")
+}
+
+// ─── Transactions ────────────────────────────────────────
+model Transaction {
+  id            String            @id @default(uuid())
+  userId        String            @map("user_id")
+  plan          Plan
+  durationDays  Int               @map("duration_days")
+  amount        Int
+  status        TransactionStatus @default(PENDING)
+  paymentMethod String?           @map("payment_method")
+  paymentUrl    String?           @map("payment_url")
+  sessionId     String?           @map("session_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
 }

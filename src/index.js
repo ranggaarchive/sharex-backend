@@ -10,6 +10,7 @@ const domainRoutes = require('./routes/domain.routes');
 const cookieRoutes = require('./routes/cookie.routes');
 const guardRoutes = require('./routes/guard.routes');
 const adminRoutes = require('./routes/admin.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api/domains', domainRoutes);
 app.use('/api/cookies', cookieRoutes);
 app.use('/api/guard', guardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {
