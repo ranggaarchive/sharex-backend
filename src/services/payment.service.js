@@ -3,7 +3,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 const IPAYMU_VA = process.env.IPAYMU_VA;
 const IPAYMU_KEY = process.env.IPAYMU_KEY;
-const API_URL = 'https://sandbox.ipaymu.com/api/v2/payment'; // using sandbox
+const API_URL = 'https://my.ipaymu.com/api/v2/payment'; // using production
 
 /**
  * Buat sesi pembayaran iPaymu
@@ -20,7 +20,7 @@ async function createPaymentSession(data) {
       amount: data.amount.toString(),
       returnUrl: `https://sharex-user.vercel.app/tutorial`, // Redirect here on success
       cancelUrl: `https://sharex-user.vercel.app/`, // Redirect here on cancel
-      notifyUrl: `${process.env.BACKEND_URL || 'https://share-backend.up.railway.app'}/api/payment/callback`, // Webhook URL
+      notifyUrl: `https://sharex-backend-production.up.railway.app/api/payment/callback`, // Webhook URL
       referenceId: data.referenceId,
       buyerName: data.buyerName || "User",
       buyerEmail: data.buyerEmail || "user@sharex.com",
