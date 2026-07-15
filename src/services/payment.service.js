@@ -20,7 +20,7 @@ async function createPaymentSession(data) {
       amount: data.amount.toString(),
       returnUrl: `https://sharex-user.vercel.app/tutorial`, // Redirect here on success
       cancelUrl: `https://sharex-user.vercel.app/`, // Redirect here on cancel
-      notifyUrl: `https://sharex-backend-production.up.railway.app/api/payment/callback`, // Webhook URL
+      notifyUrl: `${process.env.BACKEND_URL}/api/payment/callback`, // Webhook URL
       referenceId: data.referenceId,
       buyerName: data.buyerName || "User",
       buyerEmail: data.buyerEmail || "user@sharex.com",
