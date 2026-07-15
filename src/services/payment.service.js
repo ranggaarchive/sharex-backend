@@ -1,5 +1,5 @@
 const crypto = require('crypto-js');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 const IPAYMU_VA = process.env.IPAYMU_VA;
 const IPAYMU_KEY = process.env.IPAYMU_KEY;
