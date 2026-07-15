@@ -11,7 +11,7 @@ router.get('/version', (req, res) => {
     data: {
       minRequiredVersion: "1.1",
       latestVersion: "1.1",
-      downloadUrl: "/tutorial"
+      downloadUrl: "https://sharex-user.vercel.app/tutorial"
     }
   });
 });

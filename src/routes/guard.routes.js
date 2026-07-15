@@ -13,7 +13,8 @@ router.post('/heartbeat', async (req, res, next) => {
     // e.g. checking origin, checking a secret signed by the extension
     
     await guardService.recordHeartbeat({ extensionId, fingerprint });
-    res.json({ success: true });
+    const protectedDomains = await guardService.getProtectedDomains();
+    res.json({ success: true, protectedDomains });
   } catch (err) {
     next(err);
   }
