@@ -8,8 +8,26 @@ const { authenticate } = require('../middleware/auth');
 // POST /api/payment/checkout
 router.post('/checkout', authenticate, async (req, res, next) => {
   try {
-    const { amount, durationDays, plan } = req.body;
+    const { durationDays, plan } = req.body;
     const userId = req.user.id;
+
+    // Tentukan harga secara aman di backend
+    let validAmount = 50000;
+    let validDuration = 30;
+
+    const parsedDuration = parseInt(durationDays, 10);
+    if (parsedDuration === 1) {
+      validAmount = 10000;
+      validDuration = 1;
+    } else if (parsedDuration === 7) {
+      validAmount = 25000;
+      validDuration = 7;
+    } else if (parsedDuration === 30) {
+      validAmount = 50000;
+      validDuration = 30;
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid duration' });
+    }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -21,8 +39,8 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       data: {
         userId,
         plan: plan || 'PHANTOM',
-        durationDays: durationDays || 30,
-        amount: amount || 50000,
+        durationDays: validDuration,
+        amount: validAmount,
         status: 'PENDING'
       }
     });
