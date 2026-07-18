@@ -116,6 +116,32 @@ router.post('/callback', async (req, res, next) => {
             planExpiresAt: newExpiresAt
           }
         });
+
+        if (user.referredById) {
+          const existingCommission = await prisma.walletTransaction.findFirst({
+            where: {
+              referenceTxId: transaction.id,
+              type: 'EARNING'
+            }
+          });
+
+          if (!existingCommission) {
+            const commissionAmount = Math.floor(transaction.amount * 0.25);
+            await prisma.user.update({
+              where: { id: user.referredById },
+              data: { balance: { increment: commissionAmount } }
+            });
+            await prisma.walletTransaction.create({
+              data: {
+                userId: user.referredById,
+                amount: commissionAmount,
+                type: 'EARNING',
+                description: `Komisi langganan dari ${user.email}`,
+                referenceTxId: transaction.id
+              }
+            });
+          }
+        }
       }
     } else if (status && status.toLowerCase() === 'gagal') {
       await prisma.transaction.update({

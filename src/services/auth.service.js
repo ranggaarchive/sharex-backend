@@ -6,10 +6,19 @@ const { BadRequestError, UnauthorizedError, ConflictError } = require('../utils/
 
 const prisma = new PrismaClient();
 
+function generateReferralCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 /**
  * Register a new user.
  */
-async function register({ email, password }) {
+async function register({ email, password, referralCode }) {
   if (!email || !password) {
     throw new BadRequestError('Email and password are required');
   }
@@ -23,11 +32,31 @@ async function register({ email, password }) {
     throw new ConflictError('Email already registered');
   }
 
+  let referredById = null;
+  if (referralCode) {
+    const referrer = await prisma.user.findUnique({ where: { referralCode } });
+    if (referrer) {
+      referredById = referrer.id;
+    }
+  }
+
+  let newReferralCode;
+  let isUnique = false;
+  while (!isUnique) {
+    newReferralCode = generateReferralCode();
+    const existingCode = await prisma.user.findUnique({ where: { referralCode: newReferralCode } });
+    if (!existingCode) {
+      isUnique = true;
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
     data: {
       email,
       password: hashedPassword,
+      referralCode: newReferralCode,
+      referredById,
     },
     select: {
       id: true,

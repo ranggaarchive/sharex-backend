@@ -108,4 +108,68 @@ router.get('/analytics', async (req, res, next) => {
   }
 });
 
+// === WITHDRAWALS ===
+router.get('/withdrawals', async (req, res, next) => {
+  try {
+    const withdrawals = await prisma.withdrawal.findMany({
+      include: {
+        user: { select: { email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, data: withdrawals });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/withdrawals/:id/approve', async (req, res, next) => {
+  try {
+    const withdrawal = await prisma.withdrawal.findUnique({ where: { id: req.params.id } });
+    if (!withdrawal) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
+    if (withdrawal.status !== 'PENDING') return res.status(400).json({ success: false, message: 'Only PENDING withdrawals can be approved' });
+
+    const updated = await prisma.withdrawal.update({
+      where: { id: req.params.id },
+      data: { status: 'APPROVED' }
+    });
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/withdrawals/:id/reject', async (req, res, next) => {
+  try {
+    const withdrawal = await prisma.withdrawal.findUnique({ where: { id: req.params.id } });
+    if (!withdrawal) return res.status(404).json({ success: false, message: 'Withdrawal not found' });
+    if (withdrawal.status !== 'PENDING') return res.status(400).json({ success: false, message: 'Only PENDING withdrawals can be rejected' });
+
+    // Refund balance
+    const [updated, user, tx] = await prisma.$transaction([
+      prisma.withdrawal.update({
+        where: { id: req.params.id },
+        data: { status: 'REJECTED' }
+      }),
+      prisma.user.update({
+        where: { id: withdrawal.userId },
+        data: { balance: { increment: withdrawal.amount } }
+      }),
+      prisma.walletTransaction.create({
+        data: {
+          userId: withdrawal.userId,
+          amount: withdrawal.amount,
+          type: 'REFUND',
+          description: `Pengembalian dana penarikan (Ditolak)`,
+          referenceTxId: withdrawal.id
+        }
+      })
+    ]);
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
