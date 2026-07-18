@@ -23,14 +23,20 @@ async function requestCookies(userId, accountId) {
     throw new NotFoundError('Account');
   }
 
-  if (account.cookieHealth !== 'HEALTHY') {
-    throw new BadRequestError(
-      `Account cookies are ${account.cookieHealth}. Please try another account.`
-    );
-  }
+  if (account.domain.loginMethod === 'INJECT') {
+    if (account.cookieHealth !== 'HEALTHY') {
+      throw new BadRequestError(
+        `Account cookies are ${account.cookieHealth}. Please try another account.`
+      );
+    }
 
-  if (!account.cookies) {
-    throw new BadRequestError('No cookies available for this account.');
+    if (!account.cookies) {
+      throw new BadRequestError('No cookies available for this account.');
+    }
+  } else if (account.domain.loginMethod === 'INVITE_LINK') {
+    if (!account.inviteLink) {
+      throw new BadRequestError('No invite link available for this account.');
+    }
   }
 
   // 2. Check concurrent session limit
@@ -70,27 +76,43 @@ async function requestCookies(userId, accountId) {
     },
   });
 
-  // 5. Decrypt stored cookies and re-encrypt for transit
-  const cookies = typeof account.cookies === 'string'
-    ? decrypt(account.cookies)
-    : account.cookies;
+  // Decrypt stored cookies and re-encrypt for transit (only if INJECT)
+  let encryptedForTransit = null;
+  if (account.cookies && account.domain.loginMethod === 'INJECT') {
+    const cookies = typeof account.cookies === 'string'
+      ? decrypt(account.cookies)
+      : account.cookies;
+    encryptedForTransit = encrypt(cookies);
+  }
 
-  const encryptedForTransit = encrypt(cookies);
-
-  // Decrypt local storage data if exists
+  // Decrypt local storage data if exists (only if INJECT)
   let encryptedLocalStorage = null;
-  if (account.localStorageData) {
+  if (account.localStorageData && account.domain.loginMethod === 'INJECT') {
     const lsData = typeof account.localStorageData === 'string'
       ? decrypt(account.localStorageData)
       : account.localStorageData;
     encryptedLocalStorage = encrypt(lsData);
   }
 
-  logger.info(`Cookie requested: user=${userId}, account=${accountId}`);
+  // Handle Manual and Invite Link credentials
+  let credentials = null;
+  let inviteLink = null;
+  
+  if (account.domain.loginMethod === 'MANUAL') {
+    credentials = {
+      email: account.email,
+      password: decrypt(account.password)
+    };
+  } else if (account.domain.loginMethod === 'INVITE_LINK') {
+    inviteLink = account.inviteLink;
+  }
+
+  logger.info(`Session requested: user=${userId}, account=${accountId}, method=${account.domain.loginMethod}`);
 
   return {
     sessionId: session.id,
     expiresAt: session.expiresAt,
+    loginMethod: account.domain.loginMethod,
     domain: {
       name: account.domain.name,
       url: account.domain.url,
@@ -98,6 +120,8 @@ async function requestCookies(userId, accountId) {
     },
     encryptedCookies: encryptedForTransit,
     encryptedLocalStorage: encryptedLocalStorage,
+    credentials,
+    inviteLink
   };
 }
 
@@ -189,17 +213,25 @@ async function createAccount({ domainId, label, email, password, maxConcurrent, 
   const encryptedCookies = cookies ? encrypt(cookies) : null;
   const encryptedLocalStorage = localStorageData ? encrypt(localStorageData) : null;
 
+  let cookieHealth = 'UNKNOWN';
+  if (domain.loginMethod === 'INJECT') {
+    cookieHealth = cookies || localStorageData ? 'HEALTHY' : 'UNKNOWN';
+  } else {
+    cookieHealth = 'HEALTHY'; // Assume healthy for manual/invite link
+  }
+
   return prisma.account.create({
     data: {
       domainId,
       label,
       email,
       password: encryptedPassword,
+      inviteLink: arguments[0].inviteLink || null,
       maxConcurrent: maxConcurrent || 1,
       displayCloneCount: displayCloneCount || 1,
       cookies: encryptedCookies,
       localStorageData: encryptedLocalStorage,
-      cookieHealth: cookies || localStorageData ? 'HEALTHY' : 'UNKNOWN',
+      cookieHealth,
     },
   });
 }
@@ -216,6 +248,10 @@ async function updateAccount(id, data) {
 
   if (data.password) {
     updateData.password = encrypt(data.password);
+  }
+
+  if (data.inviteLink !== undefined) {
+    updateData.inviteLink = data.inviteLink;
   }
 
   if (data.cookies) {

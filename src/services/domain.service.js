@@ -33,6 +33,7 @@ async function listDomains(userPlan) {
       url: domain.url,
       iconUrl: domain.iconUrl,
       category: domain.category,
+      loginMethod: domain.loginMethod,
       requiredPlan: domain.requiredPlan,
       hasAccess: userLevel >= requiredLevel,
       availableAccounts: availableAccounts,
@@ -91,6 +92,7 @@ async function listAccounts(domainSlug, userPlan, isAdminView = false) {
       slug: domain.slug,
       url: domain.url,
       category: domain.category,
+      loginMethod: domain.loginMethod,
     },
     accounts: accounts.flatMap((acc) => {
       if (isAdminView) {
