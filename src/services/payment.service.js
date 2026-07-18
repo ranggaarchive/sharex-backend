@@ -1,5 +1,5 @@
 const crypto = require('crypto-js');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const IPAYMU_VA = process.env.IPAYMU_VA;
 const IPAYMU_KEY = process.env.IPAYMU_KEY;
@@ -19,8 +19,8 @@ async function createPaymentSession(data) {
       qty: ["1"],
       price: [data.amount.toString()],
       amount: data.amount.toString(),
-      returnUrl: `https://sharex-user.vercel.app/tutorial`, // Redirect here on success
-      cancelUrl: `https://sharex-user.vercel.app/`, // Redirect here on cancel
+      returnUrl: `https://kitagih.com/tutorial`, // Redirect here on success
+      cancelUrl: `https://kitagih.com/`, // Redirect here on cancel
       notifyUrl: `${BACKEND_URL}/api/payment/callback`, // Webhook URL
       referenceId: data.referenceId,
       buyerName: data.buyerName || "User",
@@ -31,15 +31,15 @@ async function createPaymentSession(data) {
     const bodyEncrypt = crypto.SHA256(JSON.stringify(body));
     const stringToSign = `POST:${IPAYMU_VA}:${bodyEncrypt}:${IPAYMU_KEY}`;
     const signature = crypto.enc.Hex.stringify(crypto.HmacSHA256(stringToSign, IPAYMU_KEY));
-    
+
     // timestamp
     const now = new Date();
-    const timestamp = now.getFullYear().toString() + 
-                      String(now.getMonth() + 1).padStart(2, '0') + 
-                      String(now.getDate()).padStart(2, '0') + 
-                      String(now.getHours()).padStart(2, '0') + 
-                      String(now.getMinutes()).padStart(2, '0') + 
-                      String(now.getSeconds()).padStart(2, '0');
+    const timestamp = now.getFullYear().toString() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0');
 
     const response = await fetch(API_URL, {
       method: "POST",

@@ -9,9 +9,9 @@ router.get('/version', (req, res) => {
   res.json({
     success: true,
     data: {
-      minRequiredVersion: "1.1",
-      latestVersion: "1.1",
-      downloadUrl: "https://sharex-user.vercel.app/tutorial"
+      minRequiredVersion: "1.4",
+      latestVersion: "1.4",
+      downloadUrl: "https://kitagih.com/tutorial"
     }
   });
 });
