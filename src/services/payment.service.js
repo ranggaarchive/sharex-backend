@@ -23,9 +23,12 @@ const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
  * @returns {Promise<{ qrisString: string, qrisImageBase64: string }>}
  */
 async function generateDynamicQris(amount) {
-  const { qrisdynamicgenerator, qrisimagegenerator } = await import('@misterdevs/qris-static-to-dynamic');
+  const { qrisimagegenerator } = await import('@misterdevs/qris-static-to-dynamic');
 
-  const qrisString = qrisdynamicgenerator(QRIS_STATIC, amount);
+  // Menggunakan QRIS_STATIC asli tanpa menyisipkan nominal (tag 54).
+  // Menyisipkan nominal pada akun QRIS yang didaftarkan sebagai "Statis" 
+  // akan ditolak (decline/invalid) oleh security BCA/DANA saat eksekusi bayar.
+  const qrisString = QRIS_STATIC;
   const qrisImageBase64 = await qrisimagegenerator(qrisString, 2, 6);
 
   return { qrisString, qrisImageBase64 };
