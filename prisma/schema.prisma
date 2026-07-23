@@ -156,11 +156,15 @@ model Transaction {
   userId        String            @map("user_id")
   plan          Plan
   durationDays  Int               @map("duration_days")
-  amount        Int
+  amount        Int               // Final amount (base + unique offset, with discount if applicable)
+  baseAmount    Int?              @map("base_amount")  // Original price before discount
+  uniqueOffset  Int?              @map("unique_offset") // 1-99 offset added to base for uniqueness
+  qrisData      String?           @db.Text @map("qris_data") // Dynamic QRIS string
+  hasDiscount   Boolean           @default(false) @map("has_discount") // Did user get referral discount?
   status        TransactionStatus @default(PENDING)
-  paymentMethod String?           @map("payment_method")
-  paymentUrl    String?           @map("payment_url")
-  sessionId     String?           @map("session_id")
+  paymentMethod String?           @default("QRIS") @map("payment_method")
+  paymentUrl    String?           @map("payment_url")  // Kept for backward compat
+  sessionId     String?           @map("session_id")   // Kept for backward compat
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 

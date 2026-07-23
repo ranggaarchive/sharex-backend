@@ -14,6 +14,7 @@
     "db:studio": "npx prisma studio"
   },
   "dependencies": {
+    "@misterdevs/qris-static-to-dynamic": "^1.1.2",
     "@prisma/client": "^6.9.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
