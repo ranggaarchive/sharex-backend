@@ -23,13 +23,8 @@ const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
  * @returns {Promise<{ qrisString: string, qrisImageBase64: string }>}
  */
 async function generateDynamicQris(amount) {
-  const fs = require('fs');
-  const path = require('path');
-  
   const qrisString = QRIS_STATIC;
-  const imagePath = path.join(__dirname, '../../assets/qris.jpeg');
-  const imageBuffer = await fs.promises.readFile(imagePath);
-  const qrisImageBase64 = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+  const qrisImageBase64 = ""; // Frontend langsung menggunakan gambar statis /qris.jpeg
 
   return { qrisString, qrisImageBase64 };
 }
