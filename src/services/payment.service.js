@@ -23,8 +23,10 @@ const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
  * @returns {Promise<{ qrisString: string, qrisImageBase64: string }>}
  */
 async function generateDynamicQris(amount) {
-  const qrisString = QRIS_STATIC;
-  const qrisImageBase64 = ""; // Frontend langsung menggunakan gambar statis /qris.jpeg
+  const { qrisdynamicgenerator, qrisimagegenerator } = await import('@misterdevs/qris-static-to-dynamic');
+
+  const qrisString = qrisdynamicgenerator(QRIS_STATIC, amount);
+  const qrisImageBase64 = await qrisimagegenerator(qrisString, 2, 6);
 
   return { qrisString, qrisImageBase64 };
 }
