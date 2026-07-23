@@ -23,13 +23,13 @@ const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
  * @returns {Promise<{ qrisString: string, qrisImageBase64: string }>}
  */
 async function generateDynamicQris(amount) {
-  const { qrisimagegenerator } = await import('@misterdevs/qris-static-to-dynamic');
-
-  // Menggunakan QRIS_STATIC asli tanpa menyisipkan nominal (tag 54).
-  // Menyisipkan nominal pada akun QRIS yang didaftarkan sebagai "Statis" 
-  // akan ditolak (decline/invalid) oleh security BCA/DANA saat eksekusi bayar.
+  const fs = require('fs');
+  const path = require('path');
+  
   const qrisString = QRIS_STATIC;
-  const qrisImageBase64 = await qrisimagegenerator(qrisString, 2, 6);
+  const imagePath = path.join(__dirname, '../../assets/qris.jpeg');
+  const imageBuffer = await fs.promises.readFile(imagePath);
+  const qrisImageBase64 = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
 
   return { qrisString, qrisImageBase64 };
 }
