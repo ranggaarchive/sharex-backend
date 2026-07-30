@@ -205,7 +205,7 @@ async function releaseSession(userId, sessionId) {
 /**
  * Admin: Create a new account for a domain.
  */
-async function createAccount({ domainId, label, email, password, maxConcurrent, displayCloneCount, cookies, localStorageData }) {
+async function createAccount({ domainId, label, email, password, maxConcurrent, displayCloneCount, cookies, localStorageData, loginEmail, loginPassword, inviteLinks }) {
   const domain = await prisma.domain.findUnique({ where: { id: domainId } });
   if (!domain) throw new NotFoundError('Domain');
 
@@ -226,6 +226,9 @@ async function createAccount({ domainId, label, email, password, maxConcurrent, 
       label,
       email,
       password: encryptedPassword,
+      loginEmail: loginEmail || null,
+      loginPassword: loginPassword ? encrypt(loginPassword) : null,
+      inviteLinks: inviteLinks || null,
       inviteLink: arguments[0].inviteLink || null,
       maxConcurrent: maxConcurrent || 1,
       displayCloneCount: displayCloneCount || 1,
@@ -252,6 +255,18 @@ async function updateAccount(id, data) {
 
   if (data.inviteLink !== undefined) {
     updateData.inviteLink = data.inviteLink;
+  }
+
+  if (data.loginEmail !== undefined) {
+    updateData.loginEmail = data.loginEmail;
+  }
+
+  if (data.loginPassword) {
+    updateData.loginPassword = encrypt(data.loginPassword);
+  }
+
+  if (data.inviteLinks !== undefined) {
+    updateData.inviteLinks = data.inviteLinks;
   }
 
   if (data.cookies) {
