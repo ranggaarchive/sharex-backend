@@ -65,40 +65,25 @@ async function requestCookies(userId, accountId) {
   let encryptedForTransit = null;
   let targetUrl = account.url;
   
-  if (account.loginMethod === 'INJECT' && account.groupyId) {
-    try {
-      // Fetch fresh cookies from Groupy API
-      const response = await fetch(`${GROUPY_API_URL}/service/${account.groupyId}?token=${GROUPY_TOKEN}`);
-      if (!response.ok) {
-        throw new Error(`Groupy API returned ${response.status}`);
+  if (account.loginMethod === 'INJECT') {
+    if (account.cookies) {
+      let cookiesRaw = account.cookies;
+      if (typeof cookiesRaw === 'string') {
+        try {
+          const parsed = JSON.parse(cookiesRaw);
+          cookiesRaw = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+        } catch (e) {
+          logger.warn('Failed to parse cookies string from database');
+        }
       }
-      const data = await response.json();
       
-      if (data.message && data.message.key) {
-        let cookiesRaw = data.message.key;
-        if (typeof cookiesRaw === 'string') {
-          // It might be stringified twice, so parse it
-          try {
-            const parsed = JSON.parse(cookiesRaw);
-            cookiesRaw = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-          } catch (e) {
-            logger.warn('Failed to parse cookies string from Groupy API');
-          }
-        }
-        
-        if (Array.isArray(cookiesRaw)) {
-          encryptedForTransit = encrypt(cookiesRaw);
-        }
-        
-        if (data.message.url) {
-          targetUrl = data.message.url;
-        }
+      if (Array.isArray(cookiesRaw)) {
+        encryptedForTransit = encrypt(cookiesRaw);
       } else {
-        throw new BadRequestError('No cookies returned from Groupy API');
+        throw new BadRequestError('Cookies in database are not an array');
       }
-    } catch (err) {
-      logger.error(`Error fetching cookies from Groupy API for account ${account.id}: ${err.message}`);
-      throw new BadRequestError('Failed to fetch cookies for this service.');
+    } else {
+      throw new BadRequestError('No cookies stored for this service. Please sync from dashboard.');
     }
   }
 

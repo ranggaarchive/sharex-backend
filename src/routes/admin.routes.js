@@ -28,6 +28,20 @@ router.put('/accounts/:id', async (req, res, next) => {
   }
 });
 
+router.get('/accounts/:id/fetch-groupy', async (req, res, next) => {
+  try {
+    const account = await prisma.account.findUnique({ where: { id: req.params.id } });
+    if (!account || !account.groupyId) {
+      return res.status(404).json({ success: false, message: 'Account or Groupy ID not found' });
+    }
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/service/${account.groupyId}?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
+    const data = await response.json();
+    res.json({ success: true, data: data.message });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // === USERS ===
 router.get('/users', async (req, res, next) => {
   try {
