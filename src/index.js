@@ -12,6 +12,7 @@ const guardRoutes = require('./routes/guard.routes');
 const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const referralRoutes = require('./routes/referral.routes');
+const domainRoutes = require('./routes/domain.routes');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/guard', guardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/referral', referralRoutes);
+app.use('/api/domains', domainRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {
