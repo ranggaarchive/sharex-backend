@@ -91,6 +91,22 @@ async function syncAccountsFromGroupy() {
       
       const mappedCategory = categoryMap[service.category?.toLowerCase()] || 'STREAMING';
 
+      // Bulk fetch the service details to get the cookies (key array) and URL
+      let serviceUrl = null;
+      let isHealthy = false;
+      try {
+        const detailRes = await fetch(`${GROUPY_API_URL}/service/${service.id}?token=${GROUPY_TOKEN}`);
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          if (detailData.message) {
+            if (detailData.message.url) serviceUrl = detailData.message.url;
+            if (detailData.message.key) isHealthy = true; // Has cookies
+          }
+        }
+      } catch (err) {
+        // Silently fail and keep UNKNOWN health if we can't fetch details
+      }
+
       const existingAccount = await prisma.account.findUnique({
         where: { groupyId: String(service.id) }
       });
@@ -102,6 +118,9 @@ async function syncAccountsFromGroupy() {
             name: service.name,
             iconUrl: service.logo,
             category: mappedCategory,
+            url: serviceUrl,
+            cookieHealth: isHealthy ? 'HEALTHY' : existingAccount.cookieHealth,
+            lastHealthCheck: new Date(),
           }
         });
         updated++;
@@ -112,8 +131,10 @@ async function syncAccountsFromGroupy() {
             name: service.name,
             iconUrl: service.logo,
             category: mappedCategory,
+            url: serviceUrl,
+            cookieHealth: isHealthy ? 'HEALTHY' : 'UNKNOWN',
+            lastHealthCheck: new Date(),
             requiredPlan: 'FREE', // Default plan, admin can change later
-            cookieHealth: 'UNKNOWN',
             loginMethod: 'INJECT',
             maxConcurrent: 1,
           }
