@@ -12,7 +12,7 @@ router.get('/', authenticate, async (req, res, next) => {
       where: {
         cookieHealth: 'HEALTHY',
         requiredPlan: {
-          in: userPlan === 'VIP' ? ['FREE', 'VIP'] : ['FREE']
+          in: userPlan === 'PHANTOM' ? ['FREE', 'PHANTOM'] : ['FREE']
         }
       }
     });
@@ -47,7 +47,7 @@ router.get('/:slug/accounts', authenticate, async (req, res, next) => {
       where: {
         cookieHealth: 'HEALTHY',
         requiredPlan: {
-          in: userPlan === 'VIP' ? ['FREE', 'VIP'] : ['FREE']
+          in: userPlan === 'PHANTOM' ? ['FREE', 'PHANTOM'] : ['FREE']
         }
       }
     });
