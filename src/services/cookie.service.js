@@ -105,12 +105,10 @@ async function requestCookies(userId, accountId) {
       password: account.loginPassword ? decrypt(account.loginPassword) : decrypt(account.password)
     };
   } else if (account.domain.loginMethod === 'INVITE_LINK') {
-    // If there's an array of invite links, pick one at random
     if (account.inviteLinks && Array.isArray(account.inviteLinks) && account.inviteLinks.length > 0) {
-      const randomIndex = Math.floor(Math.random() * account.inviteLinks.length);
-      inviteLink = account.inviteLinks[randomIndex];
+      inviteLink = account.inviteLinks; // Return the entire array
     } else {
-      inviteLink = account.inviteLink;
+      inviteLink = [account.inviteLink]; // Return as an array of 1
     }
   }
 
