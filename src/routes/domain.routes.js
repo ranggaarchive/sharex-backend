@@ -20,10 +20,13 @@ router.get('/', authenticate, async (req, res, next) => {
     const domainsMap = {};
 
     accounts.forEach(acc => {
-      const slug = acc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Group accounts by base name (e.g., "Apple Music 2" -> "Apple Music")
+      const baseName = acc.name.replace(/\s*\d+$/, '').trim();
+      const slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
       if (!domainsMap[slug]) {
         domainsMap[slug] = {
-          name: acc.name,
+          name: baseName,
           slug: slug,
           iconUrl: acc.iconUrl,
           availableAccounts: 0
@@ -53,7 +56,8 @@ router.get('/:slug/accounts', authenticate, async (req, res, next) => {
     });
 
     const matchingAccounts = allAccounts.filter(acc => {
-      const accSlug = acc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const baseName = acc.name.replace(/\s*\d+$/, '').trim();
+      const accSlug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       return accSlug === slug;
     });
 
