@@ -87,7 +87,7 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
         lastHealthCheck: new Date(),
         requiredPlan: 'FREE',
         loginMethod: 'INJECT',
-        maxConcurrent: 1,
+        maxConcurrent: 1000,
       }
     });
     
