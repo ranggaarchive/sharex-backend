@@ -109,7 +109,7 @@ model Account {
   
   // Multi-method auth fields
   loginEmail      String?      @map("login_email") // For manual credential login
-  loginPassword   String?      @map("login_password")
+  loginPassword   String?      @db.Text @map("login_password")
   inviteLinks     Json?        @map("invite_links") // Array of Canva invite links etc.
   
   inviteLink      String?      @map("invite_link") // Legacy URL for INVITE_LINK method
