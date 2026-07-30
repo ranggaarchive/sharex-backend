@@ -45,13 +45,26 @@ async function verifyGuard(extensionId) {
  * Get a list of all cookie domains that should be protected by the Guard.
  */
 async function getProtectedDomains() {
-  const domains = await prisma.domain.findMany({
+  const accounts = await prisma.account.findMany({
     where: { isActive: true },
-    select: { cookieDomain: true }
+    select: { url: true }
   });
   
+  // Extract domains from URL
+  const domains = accounts
+    .map(a => {
+      try {
+        if (!a.url) return null;
+        const urlObj = new URL(a.url);
+        return `.${urlObj.hostname.replace('www.', '')}`;
+      } catch (e) {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
   // Return unique domains
-  return [...new Set(domains.map(d => d.cookieDomain))];
+  return [...new Set(domains)];
 }
 
 module.exports = { recordHeartbeat, verifyGuard, getProtectedDomains };

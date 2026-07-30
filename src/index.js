@@ -6,7 +6,7 @@ const { apiLimiter } = require('./middleware/rateLimit');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
-const domainRoutes = require('./routes/domain.routes');
+const accountRoutes = require('./routes/account.routes');
 const cookieRoutes = require('./routes/cookie.routes');
 const guardRoutes = require('./routes/guard.routes');
 const adminRoutes = require('./routes/admin.routes');
@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/domains', domainRoutes);
+app.use('/api/accounts', accountRoutes);
 app.use('/api/cookies', cookieRoutes);
 app.use('/api/guard', guardRoutes);
 app.use('/api/admin', adminRoutes);

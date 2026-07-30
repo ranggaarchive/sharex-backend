@@ -51,7 +51,7 @@ enum LoginMethod {
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
-  password        String    // bcrypt hashed
+  password        String // bcrypt hashed
   licenseKey      String?   @unique @map("license_key")
   role            UserRole  @default(USER)
   plan            Plan      @default(FREE)
@@ -59,72 +59,57 @@ model User {
   currentDeviceId String?   @map("current_device_id")
   banWarningCount Int       @default(0) @map("ban_warning_count")
   isActive        Boolean   @default(true) @map("is_active")
-  
+
   // Referral System
-  referralCode    String    @unique @map("referral_code")
-  referredById    String?   @map("referred_by_id")
-  balance         Int       @default(0)
+  referralCode String  @unique @map("referral_code")
+  referredById String? @map("referred_by_id")
+  balance      Int     @default(0)
 
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  sessions          Session[]
-  transactions      Transaction[]
-  referredBy        User?               @relation("Referral", fields: [referredById], references: [id])
-  referrals         User[]              @relation("Referral")
-  withdrawals       Withdrawal[]
+  sessions           Session[]
+  transactions       Transaction[]
+  referredBy         User?               @relation("Referral", fields: [referredById], references: [id])
+  referrals          User[]              @relation("Referral")
+  withdrawals        Withdrawal[]
   walletTransactions WalletTransaction[]
 
   @@map("users")
 }
 
-// ─── Domains (Services like Netflix, ChatGPT, etc) ──────
-model Domain {
-  id           String   @id @default(uuid())
-  name         String   // "Netflix"
-  slug         String   @unique // "netflix"
-  url          String   // "https://www.netflix.com"
-  loginUrl     String?  @map("login_url") // "https://www.netflix.com/login"
-  iconUrl      String?  @map("icon_url")
-  category     Category @default(STREAMING)
-  requiredPlan Plan     @default(FREE) @map("required_plan")
-  loginMethod  LoginMethod @default(INJECT) @map("login_method")
-  cookieDomain String   @map("cookie_domain") // ".netflix.com"
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  accounts Account[]
-
-  @@map("domains")
-}
-
-// ─── Premium Accounts ───────────────────────────────────
+// ─── Accounts / Services (replaces Domain) ───────────────
 model Account {
-  id              String       @id @default(uuid())
-  domainId        String       @map("domain_id")
-  label           String       // "Netflix Akun 1"
-  email           String       // login email for the premium account
-  password        String       // encrypted password for the premium account
-  
-  // Multi-method auth fields
-  loginEmail      String?      @map("login_email") // For manual credential login
-  loginPassword   String?      @db.Text @map("login_password")
-  inviteLinks     Json?        @map("invite_links") // Array of Canva invite links etc.
-  
-  inviteLink      String?      @map("invite_link") // Legacy URL for INVITE_LINK method
-  cookies         Json?        // encrypted cookie array [{name, value, domain, path, ...}]
-  localStorageData Json?       @map("local_storage_data") // encrypted local storage array [{key, value}]
-  cookieHealth    CookieHealth @default(UNKNOWN) @map("cookie_health")
-  lastHealthCheck DateTime?    @map("last_health_check")
-  lastCookieSync  DateTime?    @map("last_cookie_sync")
-  maxConcurrent   Int          @default(1) @map("max_concurrent")
-  displayCloneCount Int        @default(1) @map("display_clone_count")
-  isActive        Boolean      @default(true) @map("is_active")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  id           String      @id @default(uuid())
+  groupyId     String      @unique @map("groupy_id") // ID from groupy-re API
+  name         String // e.g. "Netflix 2"
+  category     Category    @default(STREAMING)
+  url          String?
+  iconUrl      String?     @map("icon_url")
+  requiredPlan Plan        @default(FREE) @map("required_plan")
+  loginMethod  LoginMethod @default(INJECT) @map("login_method")
 
-  domain   Domain    @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  // Optional internal fields if we still want local credentials for some reason
+  email         String? // login email for the premium account
+  password      String? // encrypted password for the premium account
+  loginEmail    String? @map("login_email") // For manual credential login
+  loginPassword String? @map("login_password") @db.Text
+  inviteLinks   Json?   @map("invite_links") // Array of Canva invite links etc.
+  inviteLink    String? @map("invite_link") // Legacy URL for INVITE_LINK method
+
+  // Cookies & tracking (fetched live, but can cache)
+  cookies          Json? // encrypted cookie array [{name, value, domain, path, ...}]
+  localStorageData Json?        @map("local_storage_data") // encrypted local storage array [{key, value}]
+  cookieHealth     CookieHealth @default(UNKNOWN) @map("cookie_health")
+  lastHealthCheck  DateTime?    @map("last_health_check")
+  lastCookieSync   DateTime?    @map("last_cookie_sync")
+
+  maxConcurrent     Int      @default(1) @map("max_concurrent")
+  displayCloneCount Int      @default(1) @map("display_clone_count")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
   sessions Session[]
 
   @@map("accounts")
@@ -162,15 +147,15 @@ model Transaction {
   userId        String            @map("user_id")
   plan          Plan
   durationDays  Int               @map("duration_days")
-  amount        Int               // Final amount (base + unique offset, with discount if applicable)
-  baseAmount    Int?              @map("base_amount")  // Original price before discount
+  amount        Int // Final amount (base + unique offset, with discount if applicable)
+  baseAmount    Int?              @map("base_amount") // Original price before discount
   uniqueOffset  Int?              @map("unique_offset") // 1-99 offset added to base for uniqueness
-  qrisData      String?           @db.Text @map("qris_data") // Dynamic QRIS string
+  qrisData      String?           @map("qris_data") @db.Text // Dynamic QRIS string
   hasDiscount   Boolean           @default(false) @map("has_discount") // Did user get referral discount?
   status        TransactionStatus @default(PENDING)
   paymentMethod String?           @default("QRIS") @map("payment_method")
-  paymentUrl    String?           @map("payment_url")  // Kept for backward compat
-  sessionId     String?           @map("session_id")   // Kept for backward compat
+  paymentUrl    String?           @map("payment_url") // Kept for backward compat
+  sessionId     String?           @map("session_id") // Kept for backward compat
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
@@ -197,7 +182,7 @@ model Withdrawal {
   userId        String           @map("user_id")
   amount        Int
   status        WithdrawalStatus @default(PENDING)
-  provider      String           // Gopay, Dana, Ovo, Bank Name
+  provider      String // Gopay, Dana, Ovo, Bank Name
   accountNumber String           @map("account_number")
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
@@ -220,4 +205,3 @@ model WalletTransaction {
 
   @@map("wallet_transactions")
 }
-

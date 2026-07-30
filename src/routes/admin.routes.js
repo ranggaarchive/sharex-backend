@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticate, requireAdmin } = require('../middleware/auth');
-const domainService = require('../services/domain.service');
+const accountService = require('../services/account.service');
 const cookieService = require('../services/cookie.service');
 const { PrismaClient } = require('@prisma/client');
 
@@ -9,39 +9,11 @@ const router = express.Router();
 
 router.use(authenticate, requireAdmin);
 
-// === DOMAINS ===
-router.post('/domains', async (req, res, next) => {
-  try {
-    const domain = await domainService.createDomain(req.body);
-    res.status(201).json({ success: true, data: domain });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.put('/domains/:id', async (req, res, next) => {
-  try {
-    const domain = await domainService.updateDomain(req.params.id, req.body);
-    res.json({ success: true, data: domain });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.delete('/domains/:id', async (req, res, next) => {
-  try {
-    await domainService.deleteDomain(req.params.id);
-    res.json({ success: true, message: 'Domain deleted' });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // === ACCOUNTS ===
-router.post('/accounts', async (req, res, next) => {
+router.post('/accounts/sync', async (req, res, next) => {
   try {
-    const account = await cookieService.createAccount(req.body);
-    res.status(201).json({ success: true, data: account });
+    const result = await accountService.syncAccountsFromGroupy();
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
@@ -49,17 +21,8 @@ router.post('/accounts', async (req, res, next) => {
 
 router.put('/accounts/:id', async (req, res, next) => {
   try {
-    const account = await cookieService.updateAccount(req.params.id, req.body);
+    const account = await accountService.updateAccount(req.params.id, req.body);
     res.json({ success: true, data: account });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.delete('/accounts/:id', async (req, res, next) => {
-  try {
-    await cookieService.deleteAccount(req.params.id);
-    res.json({ success: true, message: 'Account deleted' });
   } catch (err) {
     next(err);
   }
