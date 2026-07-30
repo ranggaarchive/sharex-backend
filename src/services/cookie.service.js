@@ -34,7 +34,8 @@ async function requestCookies(userId, accountId) {
       throw new BadRequestError('No cookies available for this account.');
     }
   } else if (account.domain.loginMethod === 'INVITE_LINK') {
-    if (!account.inviteLink) {
+    const hasInviteLink = account.inviteLink || (account.inviteLinks && Array.isArray(account.inviteLinks) && account.inviteLinks.length > 0);
+    if (!hasInviteLink) {
       throw new BadRequestError('No invite link available for this account.');
     }
   }
@@ -100,11 +101,17 @@ async function requestCookies(userId, accountId) {
   
   if (account.domain.loginMethod === 'MANUAL') {
     credentials = {
-      email: account.email,
-      password: decrypt(account.password)
+      email: account.loginEmail || account.email,
+      password: account.loginPassword ? decrypt(account.loginPassword) : decrypt(account.password)
     };
   } else if (account.domain.loginMethod === 'INVITE_LINK') {
-    inviteLink = account.inviteLink;
+    // If there's an array of invite links, pick one at random
+    if (account.inviteLinks && Array.isArray(account.inviteLinks) && account.inviteLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * account.inviteLinks.length);
+      inviteLink = account.inviteLinks[randomIndex];
+    } else {
+      inviteLink = account.inviteLink;
+    }
   }
 
   logger.info(`Session requested: user=${userId}, account=${accountId}, method=${account.domain.loginMethod}`);
