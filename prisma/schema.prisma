@@ -85,7 +85,7 @@ model Account {
   name         String // e.g. "Netflix 2"
   category     Category    @default(STREAMING)
   url          String?
-  iconUrl      String?     @map("icon_url")
+  iconUrl      String?     @map("icon_url") @db.Text
   requiredPlan Plan        @default(FREE) @map("required_plan")
   loginMethod  LoginMethod @default(INJECT) @map("login_method")
 

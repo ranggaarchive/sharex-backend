@@ -7,7 +7,7 @@ const router = express.Router();
 // Guard extension hits this every 5 minutes to prove it's alive and untampered
 router.post('/heartbeat', async (req, res, next) => {
   try {
-    const { extensionId, fingerprint } = req.body;
+    const { extensionId = 'unknown', fingerprint } = req.body;
     
     // In a real app, verify the request came from your actual extension
     // e.g. checking origin, checking a secret signed by the extension
