@@ -85,7 +85,7 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
         cookies,
         cookieHealth,
         lastHealthCheck: new Date(),
-        requiredPlan: 'FREE',
+        requiredPlan: 'PHANTOM',
         loginMethod: 'INJECT',
         maxConcurrent: 1000,
       }
