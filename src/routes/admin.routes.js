@@ -65,28 +65,53 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
     const mappedCategory = categoryMap[category?.toLowerCase()] || 'STREAMING';
     const cookieHealth = cookies ? 'HEALTHY' : 'UNKNOWN';
     
+    let finalUrl = url;
+    let loginMethod = 'INJECT';
+    let loginEmail = null;
+    let loginPassword = null;
+
+    if (url && url.includes('groupy.id/manual')) {
+      try {
+        const parsedUrl = new URL(url);
+        loginEmail = parsedUrl.searchParams.get('login');
+        loginPassword = parsedUrl.searchParams.get('password');
+        const targetUrl = parsedUrl.searchParams.get('url');
+        if (targetUrl) finalUrl = targetUrl;
+        if (loginEmail && loginPassword) {
+          loginMethod = 'MANUAL';
+        }
+      } catch (e) {
+        console.error('Error parsing manual url', e);
+      }
+    }
+
     const account = await prisma.account.upsert({
       where: { groupyId },
       update: {
         name,
         iconUrl: logo,
         category: mappedCategory,
-        url,
+        url: finalUrl,
         cookies,
         cookieHealth,
         lastHealthCheck: new Date(),
+        loginMethod,
+        loginEmail,
+        loginPassword
       },
       create: {
         groupyId,
         name,
         iconUrl: logo,
         category: mappedCategory,
-        url,
+        url: finalUrl,
         cookies,
         cookieHealth,
         lastHealthCheck: new Date(),
         requiredPlan: 'PHANTOM',
-        loginMethod: 'INJECT',
+        loginMethod,
+        loginEmail,
+        loginPassword,
         maxConcurrent: 1000,
       }
     });
