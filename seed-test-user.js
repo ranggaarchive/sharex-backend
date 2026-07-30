@@ -16,7 +16,8 @@ async function main() {
       email: 'user@gmail.com',
       password: hashedPassword,
       role: 'ADMIN',
-      plan: 'PHANTOM'
+      plan: 'PHANTOM',
+      referralCode: 'ADMINREF'
     }
   });
   console.log('User created:', user.email);

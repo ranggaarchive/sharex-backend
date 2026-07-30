@@ -1,4 +1,18 @@
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const config = require('../config/env');
+
+const checkAdminSkip = (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, config.jwt.secret);
+      if (decoded.role === 'ADMIN') return true;
+    } catch (e) {}
+  }
+  return false;
+};
 
 // General API rate limiter
 const apiLimiter = rateLimit({
@@ -6,6 +20,7 @@ const apiLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: checkAdminSkip,
   message: {
     success: false,
     message: 'Too many requests, please try again later.',
@@ -18,6 +33,7 @@ const authLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: checkAdminSkip,
   message: {
     success: false,
     message: 'Too many auth attempts, please try again later.',
@@ -30,6 +46,7 @@ const cookieLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: checkAdminSkip,
   message: {
     success: false,
     message: 'Too many cookie requests, please slow down.',
