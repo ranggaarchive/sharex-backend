@@ -28,15 +28,70 @@ router.put('/accounts/:id', async (req, res, next) => {
   }
 });
 
-router.get('/accounts/:id/fetch-groupy', async (req, res, next) => {
+router.get('/groupy-services', async (req, res, next) => {
   try {
-    const account = await prisma.account.findUnique({ where: { id: req.params.id } });
-    if (!account || !account.groupyId) {
-      return res.status(404).json({ success: false, message: 'Account or Groupy ID not found' });
-    }
-    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/service/${account.groupyId}?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
     const data = await response.json();
     res.json({ success: true, data: data.message });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/groupy-services/:id', async (req, res, next) => {
+  try {
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/service/${req.params.id}?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
+    const data = await response.json();
+    res.json({ success: true, data: data.message });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/groupy-services/:id/save', async (req, res, next) => {
+  try {
+    const groupyId = String(req.params.id);
+    const { name, category, logo, url, cookies } = req.body;
+    
+    // Map category
+    const categoryMap = {
+      'streaming': 'STREAMING',
+      'productivity': 'PRODUCTIVITY',
+      'education': 'EDUCATION',
+      'design': 'DESIGN',
+      'music': 'MUSIC',
+      'utilities': 'UTILITIES',
+    };
+    const mappedCategory = categoryMap[category?.toLowerCase()] || 'STREAMING';
+    const cookieHealth = cookies ? 'HEALTHY' : 'UNKNOWN';
+    
+    const account = await prisma.account.upsert({
+      where: { groupyId },
+      update: {
+        name,
+        iconUrl: logo,
+        category: mappedCategory,
+        url,
+        cookies,
+        cookieHealth,
+        lastHealthCheck: new Date(),
+      },
+      create: {
+        groupyId,
+        name,
+        iconUrl: logo,
+        category: mappedCategory,
+        url,
+        cookies,
+        cookieHealth,
+        lastHealthCheck: new Date(),
+        requiredPlan: 'FREE',
+        loginMethod: 'INJECT',
+        maxConcurrent: 1,
+      }
+    });
+    
+    res.json({ success: true, data: account });
   } catch (err) {
     next(err);
   }
