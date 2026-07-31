@@ -44,7 +44,8 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/cookies', cookieRoutes);
 app.use('/api/guard', guardRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/trx', paymentRoutes);
+app.use('/api/payment', paymentRoutes); // Keep for external webhooks/callbacks
+app.use('/api/trx', paymentRoutes); // Alias for frontend to bypass adblockers
 app.use('/api/referral', referralRoutes);
 app.use('/api/domains', domainRoutes);
 app.use('/api/promo', promoRoutes);
