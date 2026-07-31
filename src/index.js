@@ -14,6 +14,7 @@ const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const referralRoutes = require('./routes/referral.routes');
 const domainRoutes = require('./routes/domain.routes');
+const configRoutes = require('./routes/config.routes');
 
 const promoRoutes = require('./routes/promo.routes');
 const canvaRoutes = require('./routes/canva.routes');
@@ -57,6 +58,7 @@ app.use('/api/payment', paymentRoutes); // Keep for external webhooks/callbacks
 app.use('/api/trx', paymentRoutes); // Alias for frontend to bypass adblockers
 app.use('/api/referral', referralRoutes);
 app.use('/api/domains', domainRoutes);
+app.use('/api/config', configRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/canva', canvaRoutes);
 
