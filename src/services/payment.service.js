@@ -11,12 +11,16 @@ const QRIS_STATIC = process.env.QRIS_STATIC;
  * Harga base per plan (dalam Rupiah, tanpa offset unik)
  */
 const PLAN_PRICES = {
-  1:  { amount: 5000, plan: 'PHANTOM', label: '1 Hari'   },
-  7:  { amount: 15000, plan: 'PHANTOM', label: '7 Hari'   },
-  30: { amount: 25000, plan: 'PHANTOM', label: '30 Hari'  },
-  90: { amount: 65000, plan: 'PHANTOM', label: '90 Hari'  },
-  180:{ amount: 120000, plan: 'PHANTOM', label: '180 Hari' },
+  1:  { amount: 5000, plan: 'PHANTOM', label: '1 Hari'   }
 };
+
+// Generate 1 to 11 months (30 to 330 days)
+for (let i = 1; i <= 11; i++) {
+  PLAN_PRICES[i * 30] = { amount: i * 25000, plan: 'PHANTOM', label: `${i} Bulan` };
+}
+
+// 1 Tahun (360 Hari) - Special Price
+PLAN_PRICES[360] = { amount: 200000, plan: 'PHANTOM', label: '1 Tahun' };
 
 const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
 
@@ -73,7 +77,7 @@ async function findUniqueOffset(baseAmount) {
 async function createQrisTransaction(userId, durationDays, promoCodeString = null) {
   const planConfig = PLAN_PRICES[durationDays];
   if (!planConfig) {
-    throw new BadRequestError('Invalid duration. Allowed: 1, 7, 30, 90, 180');
+    throw new BadRequestError('Invalid duration. Allowed: 1 day, multiples of 30 days up to 11 months, or 360 days (1 year)');
   }
 
   // Validasi Promo Code
