@@ -44,7 +44,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/cookies', cookieRoutes);
 app.use('/api/guard', guardRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use('/api/trx', paymentRoutes);
 app.use('/api/referral', referralRoutes);
 app.use('/api/domains', domainRoutes);
 app.use('/api/promo', promoRoutes);
