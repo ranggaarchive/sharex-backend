@@ -17,7 +17,7 @@ const checkAdminSkip = (req, res) => {
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   skip: checkAdminSkip,
@@ -30,7 +30,7 @@ const apiLimiter = rateLimit({
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   skip: checkAdminSkip,
@@ -43,7 +43,7 @@ const authLimiter = rateLimit({
 // Cookie request limiter (prevent abuse)
 const cookieLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   skip: checkAdminSkip,
