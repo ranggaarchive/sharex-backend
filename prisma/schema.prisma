@@ -183,6 +183,16 @@ model PromoCode {
   @@map("promo_codes")
 }
 
+// ─── Canva Links ──────────────────────────────────────────
+model CanvaLink {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
 // ─── Referral & Wallet ───────────────────────────────────
 enum WithdrawalStatus {
   PENDING
