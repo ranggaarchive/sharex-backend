@@ -4,10 +4,10 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 // Hanya admin yang bisa mengakses route ini
-router.use(authenticate, requireRole('ADMIN'));
+router.use(authenticate, requireAdmin);
 
 // GET /api/promo - List semua promo
 router.get('/', async (req, res, next) => {
