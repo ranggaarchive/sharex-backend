@@ -1,8 +1,12 @@
 const express = require('express');
 const authService = require('../services/auth.service');
 const { authenticate } = require('../middleware/auth');
+const { requireEnvelope } = require('../middleware/envelope');
 
 const router = express.Router();
+
+// All auth routes require envelope encryption (extension-only access)
+router.use(requireEnvelope);
 
 // GET /api/auth/version
 router.get('/version', (req, res) => {

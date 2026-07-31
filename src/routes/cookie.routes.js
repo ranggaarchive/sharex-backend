@@ -1,34 +1,16 @@
 const express = require('express');
 const cookieService = require('../services/cookie.service');
-const guardService = require('../services/guard.service');
 const { authenticate } = require('../middleware/auth');
+const { requireEnvelope } = require('../middleware/envelope');
 const { cookieLimiter } = require('../middleware/rateLimit');
-const { ForbiddenError } = require('../utils/errors');
 
 const router = express.Router();
 
-// Middleware to verify Guard token for cookie requests
-async function verifyGuardToken(req, res, next) {
-  const guardToken = req.headers['x-guard-token'];
-  if (!guardToken) {
-    return next(new ForbiddenError('Missing Guard token'));
-  }
-
-  // Bypass the actual DB check for the dummy token during testing
-  if (guardToken === 'dummy-guard-token') {
-    return next();
-  }
-
-  // In a real scenario, you'd decode/verify the token (e.g. JWT) sent by the Guard extension
-  const isValid = await guardService.verifyGuard(guardToken);
-  if (!isValid.isValid) {
-    return next(new ForbiddenError('Invalid or expired Guard token'));
-  }
-  next();
-}
+// All cookie routes require envelope encryption (extension-only access)
+router.use(requireEnvelope);
 
 // POST /api/cookies/request
-router.post('/request', authenticate, cookieLimiter, verifyGuardToken, async (req, res, next) => {
+router.post('/request', authenticate, cookieLimiter, async (req, res, next) => {
   try {
     const { accountId } = req.body;
     const result = await cookieService.requestCookies(req.user.id, accountId);

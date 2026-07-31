@@ -1,7 +1,11 @@
 const express = require('express');
 const guardService = require('../services/guard.service');
+const { requireEnvelope } = require('../middleware/envelope');
 
 const router = express.Router();
+
+// All guard routes require envelope encryption (extension-only access)
+router.use(requireEnvelope);
 
 // POST /api/guard/heartbeat
 // Guard extension hits this every 5 minutes to prove it's alive and untampered

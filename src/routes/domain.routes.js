@@ -3,6 +3,10 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { authenticate } = require('../middleware/auth');
+const { requireEnvelope } = require('../middleware/envelope');
+
+// All domain routes require envelope encryption (extension-only access)
+router.use(requireEnvelope);
 
 router.get('/', authenticate, async (req, res, next) => {
   try {

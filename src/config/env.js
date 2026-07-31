@@ -34,4 +34,8 @@ module.exports = {
   healthCheck: {
     intervalMinutes: 30,
   },
+
+  envelope: {
+    serverPrivateKey: process.env.ENVELOPE_SERVER_PRIVATE_KEY || '',
+  },
 };

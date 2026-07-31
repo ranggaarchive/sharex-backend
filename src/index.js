@@ -3,6 +3,7 @@ const cors = require('cors');
 const config = require('./config/env');
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimit');
+const { envelopeMiddleware } = require('./middleware/envelope');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -26,11 +27,19 @@ app.set('trust proxy', 1);
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-extension-version', 'Accept', 'Origin']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-extension-version', 'x-envelope', 'Accept', 'Origin'],
+  exposedHeaders: ['X-Envelope']
 }));
+// Parse binary envelopes (must come BEFORE JSON parser and envelope middleware)
+app.use(express.raw({ type: 'application/octet-stream', limit: '50mb' }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(apiLimiter);
+
+// Envelope decryption middleware — runs before routes, decrypts binary envelopes
+// and replaces req.body/headers with the decrypted inner payload.
+// Non-envelope requests pass through untouched.
+app.use(envelopeMiddleware);
 
 // Request Logging
 app.use((req, res, next) => {
