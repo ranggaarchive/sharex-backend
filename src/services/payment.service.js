@@ -2,6 +2,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { BadRequestError } = require('../utils/errors');
 
 // QRIS statis dari .env
 const QRIS_STATIC = process.env.QRIS_STATIC;
@@ -72,7 +73,7 @@ async function findUniqueOffset(baseAmount) {
 async function createQrisTransaction(userId, durationDays, promoCodeString = null) {
   const planConfig = PLAN_PRICES[durationDays];
   if (!planConfig) {
-    throw new Error('Invalid duration. Allowed: 1, 7, 30, 90, 180');
+    throw new BadRequestError('Invalid duration. Allowed: 1, 7, 30, 90, 180');
   }
 
   // Validasi Promo Code
@@ -80,11 +81,11 @@ async function createQrisTransaction(userId, durationDays, promoCodeString = nul
   let promo = null;
   if (promoCodeString) {
     promo = await prisma.promoCode.findUnique({ where: { code: promoCodeString } });
-    if (!promo) throw new Error('Kode promo tidak valid');
-    if (!promo.isActive) throw new Error('Kode promo tidak aktif');
-    if (promo.maxUsage > 0 && promo.currentUsage >= promo.maxUsage) throw new Error('Kuota kode promo sudah habis');
+    if (!promo) throw new BadRequestError('Kode promo tidak valid');
+    if (!promo.isActive) throw new BadRequestError('Kode promo tidak aktif');
+    if (promo.maxUsage > 0 && promo.currentUsage >= promo.maxUsage) throw new BadRequestError('Kuota kode promo sudah habis');
     if (promo.validForDays && promo.validForDays !== durationDays) {
-      throw new Error(`Kode promo ini hanya berlaku untuk paket ${promo.validForDays} hari`);
+      throw new BadRequestError(`Kode promo ini hanya berlaku untuk paket ${promo.validForDays} hari`);
     }
     promoDiscount = promo.discountAmount;
   }
@@ -95,7 +96,7 @@ async function createQrisTransaction(userId, durationDays, promoCodeString = nul
     select: { id: true, email: true, referredById: true },
   });
 
-  if (!user) throw new Error('User not found');
+  if (!user) throw new BadRequestError('User not found');
 
   const hasDiscount = Boolean(user.referredById);
   let baseAmount = hasDiscount
