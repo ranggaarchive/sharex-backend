@@ -24,23 +24,23 @@ router.get('/prices', authenticate, async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────────
 // POST /api/payment/checkout
 // Buat transaksi QRIS baru dengan nominal unik per user.
-// Body: { durationDays: 1 | 7 | 30 }
+// Body: { durationDays: 1 | 7 | 30 | 90 | 180, promoCode?: string }
 // Response: { transactionId, amount, qrisString, qrisImageBase64,
 //             hasDiscount, discountPercent, expiresAt }
 // ─────────────────────────────────────────────────────────────────
 router.post('/checkout', authenticate, async (req, res, next) => {
   try {
-    const { durationDays } = req.body;
+    const { durationDays, promoCode } = req.body;
     const parsedDays = parseInt(durationDays, 10);
 
-    if (![1, 7, 30].includes(parsedDays)) {
+    if (![1, 7, 30, 90, 180].includes(parsedDays)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid durationDays. Allowed values: 1, 7, 30',
+        message: 'Invalid durationDays. Allowed values: 1, 7, 30, 90, 180',
       });
     }
 
-    const result = await paymentService.createQrisTransaction(req.user.id, parsedDays);
+    const result = await paymentService.createQrisTransaction(req.user.id, parsedDays, promoCode);
 
     res.json({
       success: true,

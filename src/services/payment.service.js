@@ -10,9 +10,11 @@ const QRIS_STATIC = process.env.QRIS_STATIC;
  * Harga base per plan (dalam Rupiah, tanpa offset unik)
  */
 const PLAN_PRICES = {
-  1:  { amount: 10000, plan: 'PHANTOM', label: '1 Hari'   },
-  7:  { amount: 25000, plan: 'PHANTOM', label: '7 Hari'   },
-  30: { amount: 50000, plan: 'PHANTOM', label: '30 Hari'  },
+  1:  { amount: 5000, plan: 'PHANTOM', label: '1 Hari'   },
+  7:  { amount: 15000, plan: 'PHANTOM', label: '7 Hari'   },
+  30: { amount: 25000, plan: 'PHANTOM', label: '30 Hari'  },
+  90: { amount: 65000, plan: 'PHANTOM', label: '90 Hari'  },
+  180:{ amount: 120000, plan: 'PHANTOM', label: '180 Hari' },
 };
 
 const REFERRAL_DISCOUNT = 0.25; // 25% diskon untuk user yang punya referral
@@ -67,10 +69,24 @@ async function findUniqueOffset(baseAmount) {
  * @param {number} durationDays - 1, 7, atau 30
  * @returns {Promise<Object>}
  */
-async function createQrisTransaction(userId, durationDays) {
+async function createQrisTransaction(userId, durationDays, promoCodeString = null) {
   const planConfig = PLAN_PRICES[durationDays];
   if (!planConfig) {
-    throw new Error('Invalid duration. Allowed: 1, 7, 30');
+    throw new Error('Invalid duration. Allowed: 1, 7, 30, 90, 180');
+  }
+
+  // Validasi Promo Code
+  let promoDiscount = 0;
+  let promo = null;
+  if (promoCodeString) {
+    promo = await prisma.promoCode.findUnique({ where: { code: promoCodeString } });
+    if (!promo) throw new Error('Kode promo tidak valid');
+    if (!promo.isActive) throw new Error('Kode promo tidak aktif');
+    if (promo.maxUsage > 0 && promo.currentUsage >= promo.maxUsage) throw new Error('Kuota kode promo sudah habis');
+    if (promo.validForDays && promo.validForDays !== durationDays) {
+      throw new Error(`Kode promo ini hanya berlaku untuk paket ${promo.validForDays} hari`);
+    }
+    promoDiscount = promo.discountAmount;
   }
 
   // Cek apakah user punya referral → dapat diskon 25%
@@ -82,9 +98,13 @@ async function createQrisTransaction(userId, durationDays) {
   if (!user) throw new Error('User not found');
 
   const hasDiscount = Boolean(user.referredById);
-  const baseAmount = hasDiscount
+  let baseAmount = hasDiscount
     ? Math.floor(planConfig.amount * (1 - REFERRAL_DISCOUNT))
     : planConfig.amount;
+
+  if (promoDiscount > 0) {
+    baseAmount = Math.max(100, baseAmount - promoDiscount); // Minimum 100 rupiah untuk QRIS
+  }
 
   // Cari offset unik
   const uniqueOffset = await findUniqueOffset(baseAmount);
@@ -106,6 +126,7 @@ async function createQrisTransaction(userId, durationDays) {
       hasDiscount:  hasDiscount,
       status:       'PENDING',
       paymentMethod:'QRIS',
+      promoCodeId:  promo ? promo.id : null,
     },
   });
 
@@ -156,6 +177,14 @@ async function confirmPaymentByAmount(amount) {
     where: { id: transaction.id },
     data:  { status: 'SUCCESS' },
   });
+
+  // Jika ada promo code, increment currentUsage
+  if (transaction.promoCodeId) {
+    await prisma.promoCode.update({
+      where: { id: transaction.promoCodeId },
+      data: { currentUsage: { increment: 1 } },
+    });
+  }
 
   // Extend plan user
   const user = await prisma.user.findUnique({ where: { id: transaction.userId } });

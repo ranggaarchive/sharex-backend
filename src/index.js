@@ -14,6 +14,8 @@ const paymentRoutes = require('./routes/payment.routes');
 const referralRoutes = require('./routes/referral.routes');
 const domainRoutes = require('./routes/domain.routes');
 
+const promoRoutes = require('./routes/promo.routes');
+
 const app = express();
 
 // Trust proxy for Railway and express-rate-limit
@@ -40,6 +42,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/referral', referralRoutes);
 app.use('/api/domains', domainRoutes);
+app.use('/api/promo', promoRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {

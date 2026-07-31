@@ -160,8 +160,27 @@ model Transaction {
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  promoCodeId String?  @map("promo_code_id")
 
   @@map("transactions")
+}
+
+// ─── Promo Codes ──────────────────────────────────────────
+model PromoCode {
+  id             String        @id @default(uuid())
+  code           String        @unique
+  discountAmount Int           @map("discount_amount")
+  maxUsage       Int           @default(0) @map("max_usage") // 0 means unlimited
+  currentUsage   Int           @default(0) @map("current_usage")
+  validForDays   Int?          @map("valid_for_days") // null means valid for all plans
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  transactions   Transaction[]
+
+  @@map("promo_codes")
 }
 
 // ─── Referral & Wallet ───────────────────────────────────
