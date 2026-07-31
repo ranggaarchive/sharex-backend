@@ -25,14 +25,14 @@ async function authenticate(req, res, next) {
     if (deviceId) {
       const userRecord = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { currentDeviceId: true, banWarningCount: true, isActive: true }
+        select: { currentDeviceId: true, banWarningCount: true, isActive: true, role: true }
       });
       
       if (!userRecord || !userRecord.isActive) {
         return next(new UnauthorizedError('Account is deactivated'));
       }
       
-      if (userRecord.currentDeviceId && userRecord.currentDeviceId !== deviceId) {
+      if (userRecord.role !== 'ADMIN' && userRecord.currentDeviceId && userRecord.currentDeviceId !== deviceId) {
         const newCount = userRecord.banWarningCount + 1;
         const willBan = newCount >= 3;
         
