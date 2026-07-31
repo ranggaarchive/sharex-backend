@@ -54,6 +54,36 @@ router.post('/', authenticate, requireAdmin, async (req, res, next) => {
   }
 });
 
+// POST /api/canva/bulk - Bulk create canva links (Admin only)
+router.post('/bulk', authenticate, requireAdmin, async (req, res, next) => {
+  try {
+    const { links } = req.body;
+    
+    if (!links || !Array.isArray(links)) {
+      return res.status(400).json({ success: false, message: 'Data links harus berupa array' });
+    }
+
+    // Filter invalid links just in case
+    const validLinks = links.filter(l => l.name && l.url).map(l => ({
+      name: l.name.trim(),
+      url: l.url.trim(),
+      isActive: true,
+    }));
+
+    if (validLinks.length === 0) {
+      return res.status(400).json({ success: false, message: 'Tidak ada data valid untuk ditambahkan' });
+    }
+
+    const created = await prisma.canvaLink.createMany({
+      data: validLinks
+    });
+
+    res.json({ success: true, message: `Berhasil menambahkan ${created.count} link`, count: created.count });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PUT /api/canva/:id - Edit canva link (Admin only)
 router.put('/:id', authenticate, requireAdmin, async (req, res, next) => {
   try {
