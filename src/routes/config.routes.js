@@ -10,7 +10,7 @@ const API_BASE_URL = process.env.API_BASE_URL || 'https://zein.kitagih.com';
 // CONFIG DATA — Canonical source of truth
 // ============================================
 
-const rulesData = require('../../../sharex-extension/rules.json');
+const rulesData = require('../data/rules.json');
 
 const servicesData = {
   SUPPORTED_SERVICES: {
