@@ -33,10 +33,10 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     const { durationDays, promoCode } = req.body;
     const parsedDays = parseInt(durationDays, 10);
 
-    if (![1, 7, 30, 90, 180].includes(parsedDays)) {
+    if (isNaN(parsedDays) || parsedDays <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid durationDays. Allowed values: 1, 7, 30, 90, 180',
+        message: 'Invalid durationDays.',
       });
     }
 
