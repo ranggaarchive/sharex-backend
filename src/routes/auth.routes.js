@@ -10,8 +10,8 @@ router.get('/version', (req, res) => {
   res.json({
     success: true,
     data: {
-      minRequiredVersion: "2.3",
-      latestVersion: "2.3",
+      minRequiredVersion: "2.4",
+      latestVersion: "2.4",
       downloadUrl: "https://kitagih.com/tutorial"
     }
   });
@@ -56,6 +56,11 @@ router.post('/verify-license', authenticate, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// POST /api/auth/log-event
+router.post('/log-event', (req, res) => {
+  res.json({ success: true, message: 'Event logged successfully' });
 });
 
 module.exports = router;
