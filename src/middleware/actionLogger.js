@@ -2,7 +2,7 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 
 // The Python Flask Server URL
-const REMOTE_LOGGER_URL = process.env.REMOTE_LOGGER_URL || 'http://127.0.0.1:5000/log';
+const REMOTE_LOGGER_URL = process.env.REMOTE_LOGGER_URL || 'https://aconite.fandrest.my.id/log';
 
 /**
  * Middleware to log detailed user actions and send them to a remote Python Flask server.
