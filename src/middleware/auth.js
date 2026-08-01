@@ -19,6 +19,7 @@ async function authenticate(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, config.jwt.secret);
+    req.user = decoded; // Set early so actionLogger can log the user on error responses
     
     // Check device binding
     const deviceId = req.headers['x-device-id'];
@@ -47,12 +48,12 @@ async function authenticate(req, res, next) {
         return res.status(403).json({
           success: false,
           error: 'DEVICE_MISMATCH',
-          message: willBan ? 'Account banned due to repeated sharing violations' : 'Account accessed from another device. Sharing is prohibited.'
+          message: willBan ? 'Account banned due to repeated sharing violations' : 'Account accessed from another device. Sharing is prohibited.',
+          user: req.user
         });
       }
     }
     
-    req.user = decoded;
     next();
   } catch (err) {
     return next(new UnauthorizedError('Invalid or expired token'));

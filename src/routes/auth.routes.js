@@ -60,7 +60,18 @@ router.post('/verify-license', authenticate, async (req, res, next) => {
 
 // POST /api/auth/log-event
 router.post('/log-event', (req, res) => {
-  res.json({ success: true, message: 'Event logged successfully' });
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const jwt = require('jsonwebtoken');
+      const config = require('../config/env');
+      req.user = jwt.verify(token, config.jwt.secret, { ignoreExpiration: true });
+    } catch(err) {
+      // Silently fail authentication for logging if token is completely invalid
+    }
+  }
+  res.json({ success: true, message: 'Event logged successfully', user: req.user });
 });
 
 module.exports = router;
