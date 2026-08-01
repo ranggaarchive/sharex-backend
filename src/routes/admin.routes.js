@@ -9,6 +9,25 @@ const router = express.Router();
 
 router.use(authenticate, requireAdmin);
 
+// === SSO ===
+router.get('/logger/sso', async (req, res, next) => {
+  try {
+    const crypto = require('crypto');
+    const secret = process.env.LOGGER_SSO_SECRET || '8f43b67ea19253dcd9b6e3f40215a78c93de5f6a291b8d7c6b5a4f3e2d1c0b9a';
+    const payloadObj = { exp: Math.floor(Date.now() / 1000) + 60, user: req.user.id };
+    
+    const base64url = (str) => Buffer.from(str).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    
+    const payload = base64url(JSON.stringify(payloadObj));
+    const signature = crypto.createHmac('sha256', secret).update(payload).digest('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const token = `${payload}.${signature}`;
+    
+    res.json({ success: true, data: { token } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // === ACCOUNTS ===
 router.post('/accounts/sync', async (req, res, next) => {
   try {
