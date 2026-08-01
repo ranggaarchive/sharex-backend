@@ -4,6 +4,7 @@ const config = require('./config/env');
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimit');
 const { envelopeMiddleware } = require('./middleware/envelope');
+const { actionLogger } = require('./middleware/actionLogger');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -47,6 +48,9 @@ app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
+
+// Detailed Action Logging (sent to Python Flask server)
+app.use(actionLogger);
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
