@@ -4,12 +4,9 @@ const { requireEnvelope } = require('../middleware/envelope');
 
 const router = express.Router();
 
-// All guard routes require envelope encryption (extension-only access)
-router.use(requireEnvelope);
-
 // POST /api/guard/heartbeat
 // Guard extension hits this every 5 minutes to prove it's alive and untampered
-router.post('/heartbeat', async (req, res, next) => {
+router.post('/heartbeat', requireEnvelope, async (req, res, next) => {
   try {
     const { extensionId = 'unknown', fingerprint } = req.body;
     
@@ -26,7 +23,7 @@ router.post('/heartbeat', async (req, res, next) => {
 
 // POST /api/guard/verify
 // Main extension hits this or backend checks internally
-router.post('/verify', async (req, res, next) => {
+router.post('/verify', requireEnvelope, async (req, res, next) => {
   try {
     const { extensionId } = req.body;
     const result = await guardService.verifyGuard(extensionId);
