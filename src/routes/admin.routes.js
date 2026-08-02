@@ -31,7 +31,8 @@ router.get('/logger/sso', async (req, res, next) => {
 // === ACCOUNTS ===
 router.post('/accounts/sync', async (req, res, next) => {
   try {
-    const result = await accountService.syncAccountsFromGroupy();
+    const manualToken = req.headers['x-groupy-token'];
+    const result = await accountService.syncAccountsFromGroupy(manualToken);
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -49,7 +50,9 @@ router.put('/accounts/:id', async (req, res, next) => {
 
 router.get('/groupy-services', async (req, res, next) => {
   try {
-    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
+    const manualToken = req.headers['x-groupy-token'];
+    const tokenToUse = manualToken || process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd';
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?token=${tokenToUse}`);
     const data = await response.json();
     res.json({ success: true, data: data.message });
   } catch (err) {
@@ -59,7 +62,9 @@ router.get('/groupy-services', async (req, res, next) => {
 
 router.get('/groupy-services/:id', async (req, res, next) => {
   try {
-    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/service/${req.params.id}?token=${process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd'}`);
+    const manualToken = req.headers['x-groupy-token'];
+    const tokenToUse = manualToken || process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd';
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/service/${req.params.id}?token=${tokenToUse}`);
     const data = await response.json();
     res.json({ success: true, data: data.message });
   } catch (err) {

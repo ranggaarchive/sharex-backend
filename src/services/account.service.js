@@ -63,9 +63,10 @@ async function listAccounts(userPlan) {
  * Sync accounts from Groupy API.
  * This should be called by an admin or a background cron job.
  */
-async function syncAccountsFromGroupy() {
+async function syncAccountsFromGroupy(manualToken = null) {
   try {
-    const response = await fetch(`${GROUPY_API_URL}/services?token=${GROUPY_TOKEN}`);
+    const tokenToUse = manualToken || GROUPY_TOKEN;
+    const response = await fetch(`${GROUPY_API_URL}/services?token=${tokenToUse}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch from Groupy API: ${response.statusText}`);
     }
