@@ -48,6 +48,57 @@ router.put('/accounts/:id', async (req, res, next) => {
   }
 });
 
+router.get('/accounts/groupy/:id', async (req, res, next) => {
+  try {
+    const account = await prisma.account.findUnique({
+      where: { groupyId: String(req.params.id) },
+    });
+    res.json({ success: true, data: account });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/accounts/groupy/:id/sync', async (req, res, next) => {
+  try {
+    const groupyId = String(req.params.id);
+    const { name, category, logo } = req.body;
+    
+    const categoryMap = {
+      'streaming': 'STREAMING',
+      'productivity': 'PRODUCTIVITY',
+      'education': 'EDUCATION',
+      'design': 'DESIGN',
+      'music': 'MUSIC',
+      'utilities': 'UTILITIES',
+    };
+    const mappedCategory = categoryMap[category?.toLowerCase()] || 'STREAMING';
+
+    const account = await prisma.account.upsert({
+      where: { groupyId },
+      update: {
+        name,
+        iconUrl: logo,
+        category: mappedCategory,
+      },
+      create: {
+        groupyId,
+        name,
+        iconUrl: logo,
+        category: mappedCategory,
+        requiredPlan: 'FREE',
+        cookieHealth: 'UNKNOWN',
+        loginMethod: 'INJECT',
+        maxConcurrent: 1,
+      }
+    });
+
+    res.json({ success: true, data: account });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/groupy-services', async (req, res, next) => {
   try {
     const manualToken = req.headers['x-groupy-token'];
