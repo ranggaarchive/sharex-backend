@@ -10,8 +10,8 @@ router.get('/version', (req, res) => {
   res.json({
     success: true,
     data: {
-      minRequiredVersion: "2.4",
-      latestVersion: "2.4",
+      minRequiredVersion: "2.6",
+      latestVersion: "2.6",
       downloadUrl: "https://kitagih.com/tutorial"
     }
   });
