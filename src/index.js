@@ -29,7 +29,7 @@ app.set('trust proxy', 1);
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-extension-version', 'x-envelope', 'Accept', 'Origin'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-device-id', 'x-extension-version', 'x-envelope', 'Accept', 'Origin', 'x-groupy-token'],
   exposedHeaders: ['X-Envelope']
 }));
 // Parse binary envelopes (must come BEFORE JSON parser and envelope middleware)
