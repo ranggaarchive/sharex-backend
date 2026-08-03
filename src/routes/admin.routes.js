@@ -105,7 +105,25 @@ router.get('/groupy-services', async (req, res, next) => {
     const tokenToUse = manualToken || process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd';
     const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?token=${tokenToUse}`);
     const data = await response.json();
-    res.json({ success: true, data: data.message });
+    const groupyServices = data.message || [];
+    
+    const localAccounts = await prisma.account.findMany({
+      select: { groupyId: true, cookies: true }
+    });
+    
+    const localMap = {};
+    for (const acc of localAccounts) {
+      if (acc.cookies && (!Array.isArray(acc.cookies) || acc.cookies.length > 0)) {
+        localMap[acc.groupyId] = true;
+      }
+    }
+    
+    const mergedServices = groupyServices.map(service => ({
+      ...service,
+      cookies: localMap[service.id] ? true : false
+    }));
+    
+    res.json({ success: true, data: mergedServices });
   } catch (err) {
     next(err);
   }
