@@ -240,6 +240,51 @@ router.get('/analytics', async (req, res, next) => {
   }
 });
 
+router.get('/analytics/profit', async (req, res, next) => {
+  try {
+    const { month, year } = req.query;
+    const date = new Date();
+    
+    const targetMonth = month ? parseInt(month) : date.getMonth() + 1;
+    const targetYear = year ? parseInt(year) : date.getFullYear();
+
+    const startDate = new Date(targetYear, targetMonth - 1, 1);
+    const endDate = new Date(targetYear, targetMonth, 1);
+
+    const [totalUsers, subscribedUsers, profitAggr] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { plan: { not: 'FREE' } } }),
+      prisma.transaction.aggregate({
+        where: {
+          status: 'SUCCESS',
+          createdAt: {
+            gte: startDate,
+            lt: endDate,
+          }
+        },
+        _sum: {
+          amount: true
+        }
+      })
+    ]);
+
+    const profit = profitAggr._sum.amount || 0;
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        subscribedUsers,
+        profit,
+        month: targetMonth,
+        year: targetYear
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // === WITHDRAWALS ===
 router.get('/withdrawals', async (req, res, next) => {
   try {
