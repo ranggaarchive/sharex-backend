@@ -201,7 +201,7 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
 router.get('/users', async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, email: true, plan: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, email: true, plan: true, role: true, isActive: true, createdAt: true, updatedAt: true, planExpiresAt: true, banWarningCount: true },
       orderBy: { createdAt: 'desc' },
     });
     res.json({ success: true, data: users });
