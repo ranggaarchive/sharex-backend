@@ -349,4 +349,36 @@ router.post('/withdrawals/:id/reject', async (req, res, next) => {
   }
 });
 
+// === TRANSACTIONS ===
+router.get('/transactions', async (req, res, next) => {
+  try {
+    const transactions = await prisma.transaction.findMany({
+      include: {
+        user: { select: { email: true } },
+        promoCode: { select: { code: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, data: transactions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// === SESSIONS ===
+router.get('/sessions', async (req, res, next) => {
+  try {
+    const sessions = await prisma.session.findMany({
+      include: {
+        user: { select: { email: true } },
+        account: { select: { name: true, category: true } }
+      },
+      orderBy: { startedAt: 'desc' }
+    });
+    res.json({ success: true, data: sessions });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
