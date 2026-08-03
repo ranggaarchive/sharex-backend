@@ -65,6 +65,7 @@ app.use('/api/domains', domainRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/canva', canvaRoutes);
+app.use('/api/quiz', require('./routes/quiz.routes'));
 
 // 404 Handler
 app.use((req, res, next) => {

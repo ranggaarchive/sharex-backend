@@ -38,4 +38,6 @@ module.exports = {
   envelope: {
     serverPrivateKey: process.env.ENVELOPE_SERVER_PRIVATE_KEY || '',
   },
+
+  deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
 };
