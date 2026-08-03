@@ -25,7 +25,7 @@ router.post('/solve', async (req, res) => {
     const fullMessages = [
       {
         role: "system",
-        content: `Kamu adalah asisten ujian. Jawab HANYA dengan JSON yang persis memiliki format {"jawaban": "A"} atau B, C, D, E.`
+        content: `Kamu adalah asisten ujian. Jawab HANYA dengan JSON valid yang berisi dua key: "jawaban" (berisi huruf opsi A, B, C, D, atau E) dan "penjelasan" (berisi penjelasan singkat 1-2 kalimat). Contoh: {"jawaban": "A", "penjelasan": "Karena..."}`
       },
       ...messages
     ];
