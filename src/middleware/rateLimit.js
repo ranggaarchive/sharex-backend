@@ -19,7 +19,7 @@ const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000,
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: true, // required by actionLogger for X-RateLimit-Remaining
   skip: checkAdminSkip,
   message: {
     success: false,
@@ -36,7 +36,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: true,
   skip: checkAdminSkip,
   message: {
     success: false,
@@ -49,7 +49,7 @@ const cookieLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 300,
   standardHeaders: true,
-  legacyHeaders: false,
+  legacyHeaders: true,
   skip: checkAdminSkip,
   message: {
     success: false,

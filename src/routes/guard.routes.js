@@ -15,6 +15,13 @@ router.post('/heartbeat', requireEnvelope, async (req, res, next) => {
     
     await guardService.recordHeartbeat({ extensionId, fingerprint });
     const protectedDomains = await guardService.getProtectedDomains();
+    
+    res._logContext = {
+      action: 'guard_heartbeat',
+      extension_fingerprint: fingerprint,
+      protected_domains_count: protectedDomains.length
+    };
+    
     res.json({ success: true, protectedDomains });
   } catch (err) {
     next(err);

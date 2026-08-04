@@ -42,6 +42,12 @@ router.post('/accounts/sync', async (req, res, next) => {
 router.put('/accounts/:id', async (req, res, next) => {
   try {
     const account = await accountService.updateAccount(req.params.id, req.body);
+    res._logContext = {
+      action: 'admin_update_account',
+      target_entity_type: 'account',
+      target_entity_id: req.params.id,
+      action_type: 'update'
+    };
     res.json({ success: true, data: account });
   } catch (err) {
     next(err);
@@ -209,6 +215,13 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
       }
     });
     
+    res._logContext = {
+      action: 'admin_save_groupy_service',
+      target_entity_type: 'account',
+      target_entity_id: account.id,
+      action_type: 'upsert'
+    };
+    
     res.json({ success: true, data: account });
   } catch (err) {
     next(err);
@@ -235,6 +248,12 @@ router.put('/users/:id', async (req, res, next) => {
       data: req.body,
       select: { id: true, email: true, plan: true, role: true, isActive: true },
     });
+    res._logContext = {
+      action: 'admin_update_user',
+      target_entity_type: 'user',
+      target_entity_id: req.params.id,
+      action_type: 'update'
+    };
     res.json({ success: true, data: user });
   } catch (err) {
     next(err);
