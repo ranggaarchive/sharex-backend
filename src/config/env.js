@@ -1,8 +1,19 @@
 require('dotenv').config();
+const os = require('os');
+
+// Read version from package.json if available
+let SERVICE_VERSION = 'unknown';
+try {
+  const pkg = require('../../package.json');
+  SERVICE_VERSION = pkg.version || 'unknown';
+} catch {}
 
 module.exports = {
   port: process.env.PORT || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
+
+  serviceVersion: process.env.SERVICE_VERSION || SERVICE_VERSION,
+  serverHostname: os.hostname(),
 
   jwt: {
     secret: process.env.JWT_SECRET || 'fallback-secret-key',

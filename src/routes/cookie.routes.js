@@ -13,7 +13,19 @@ router.use(requireEnvelope);
 router.post('/request', authenticate, cookieLimiter, async (req, res, next) => {
   try {
     const { accountId } = req.body;
+    req._logContext = {
+      _enrichedBody: {
+        action: 'cookie_request',
+        account_id: accountId,
+        user_plan: req.user.plan,
+      }
+    };
     const result = await cookieService.requestCookies(req.user.id, accountId);
+    res._logContext = {
+      session_id: result.sessionId,
+      account_id: accountId,
+      expires_at: result.expiresAt,
+    };
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

@@ -25,6 +25,10 @@ const apiLimiter = rateLimit({
     success: false,
     message: 'Too many requests, please try again later.',
   },
+  keyGenerator: (req) => req.ip,
+  handler: (req, res, next, options) => {
+    res.status(429).json(options.message);
+  },
 });
 
 // Stricter limiter for auth endpoints

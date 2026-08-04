@@ -40,7 +40,26 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       });
     }
 
+    // Attach enriched context for logging before the service call
+    req._logContext = {
+      _enrichedBody: {
+        action: 'payment_checkout',
+        duration_requested: parsedDays,
+        promo_code: promoCode || null,
+        user_plan: req.user.plan,
+      }
+    };
+
     const result = await paymentService.createQrisTransaction(req.user.id, parsedDays, promoCode);
+
+    // Attach payment result context to response for logging
+    res._logContext = {
+      transaction_id: result.transactionId,
+      amount: result.amount,
+      plan: result.plan,
+      duration_days: parsedDays,
+      has_discount: result.hasDiscount,
+    };
 
     res.json({
       success: true,
@@ -122,12 +141,28 @@ router.post('/confirm', async (req, res, next) => {
     const result = await paymentService.confirmPaymentByAmount(amount);
 
     if (result.alreadyProcessed) {
+      res._logContext = {
+        action: 'payment_confirm',
+        confirmed_amount: amount,
+        already_processed: true,
+        transaction_id: result.transactionId,
+      };
       return res.json({
         success: true,
         message: 'Transaction was already processed',
         data: { transactionId: result.transactionId },
       });
     }
+
+    res._logContext = {
+      action: 'payment_confirm',
+      confirmed_amount: amount,
+      transaction_id: result.transactionId,
+      user_id: result.userId,
+      plan: result.plan,
+      duration_days: result.durationDays,
+      new_expires_at: result.newExpiresAt,
+    };
 
     console.log(`[QRIS Confirm] Transaksi berhasil: ${result.transactionId} | User: ${result.userId} | Plan: ${result.plan} ${result.durationDays}d | Amount: ${amount}`);
 

@@ -328,6 +328,13 @@ router.post('/withdrawals/:id/approve', async (req, res, next) => {
       where: { id: req.params.id },
       data: { status: 'APPROVED' }
     });
+    res._logContext = {
+      action: 'withdrawal_approve',
+      withdrawal_id: req.params.id,
+      amount: withdrawal.amount,
+      provider: withdrawal.provider,
+      user_id: withdrawal.userId,
+    };
     res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -360,6 +367,15 @@ router.post('/withdrawals/:id/reject', async (req, res, next) => {
         }
       })
     ]);
+
+    res._logContext = {
+      action: 'withdrawal_reject',
+      withdrawal_id: req.params.id,
+      amount: withdrawal.amount,
+      provider: withdrawal.provider,
+      user_id: withdrawal.userId,
+      refund_amount: withdrawal.amount,
+    };
 
     res.json({ success: true, data: updated });
   } catch (err) {
