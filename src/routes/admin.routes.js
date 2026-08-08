@@ -193,7 +193,27 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
       'utilities': 'UTILITIES',
     };
     const mappedCategory = categoryMap[category?.toLowerCase()] || 'STREAMING';
-    const cookieHealth = cookies ? 'HEALTHY' : 'UNKNOWN';
+    let cookieHealth = 'UNKNOWN';
+    if (cookies) {
+      let parsedCookies = cookies;
+      if (typeof parsedCookies === 'string') {
+        try {
+          parsedCookies = JSON.parse(parsedCookies);
+          if (typeof parsedCookies === 'string') {
+            parsedCookies = JSON.parse(parsedCookies);
+          }
+        } catch (e) {}
+      }
+
+      if (Array.isArray(parsedCookies) && parsedCookies.length > 0) {
+        const currentTime = Math.floor(Date.now() / 1000);
+        // A cookie is expired if it has an expirationDate and it's less than current time
+        const isExpired = parsedCookies.some(c => c.expirationDate && c.expirationDate < currentTime);
+        cookieHealth = isExpired ? 'EXPIRED' : 'HEALTHY';
+      } else if (parsedCookies && !Array.isArray(parsedCookies)) {
+        cookieHealth = 'HEALTHY'; // e.g. for manual login objects
+      }
+    }
     
     let finalUrl = url;
     let loginMethod = 'INJECT';
