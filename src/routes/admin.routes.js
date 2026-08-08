@@ -134,11 +134,26 @@ router.get('/groupy-services', async (req, res, next) => {
     const localMap = {};
     for (const acc of localAccounts) {
       if (acc.groupyId) {
+        let currentHealth = acc.cookieHealth;
+        if (currentHealth === 'HEALTHY' && acc.cookies) {
+          let parsedCookies = acc.cookies;
+          if (typeof parsedCookies === 'string') {
+            try { parsedCookies = JSON.parse(parsedCookies); } catch (e) {}
+          }
+          if (Array.isArray(parsedCookies)) {
+            const now = Date.now() / 1000;
+            const hasExpired = parsedCookies.some(c => c.expirationDate && c.expirationDate < now);
+            if (hasExpired) {
+              currentHealth = 'EXPIRED';
+            }
+          }
+        }
+
         localMap[acc.groupyId] = {
           dbId: acc.id,
           inDb: true,
           hasCookies: !!(acc.cookies && (!Array.isArray(acc.cookies) || acc.cookies.length > 0)),
-          cookieHealth: acc.cookieHealth,
+          cookieHealth: currentHealth,
           url: acc.url,
           loginMethod: acc.loginMethod,
           updatedAt: acc.updatedAt,
@@ -195,23 +210,17 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
     const mappedCategory = categoryMap[category?.toLowerCase()] || 'STREAMING';
     let cookieHealth = 'UNKNOWN';
     if (cookies) {
+      cookieHealth = 'HEALTHY';
       let parsedCookies = cookies;
       if (typeof parsedCookies === 'string') {
-        try {
-          parsedCookies = JSON.parse(parsedCookies);
-          if (typeof parsedCookies === 'string') {
-            parsedCookies = JSON.parse(parsedCookies);
-          }
-        } catch (e) {}
+        try { parsedCookies = JSON.parse(parsedCookies); } catch (e) {}
       }
-
-      if (Array.isArray(parsedCookies) && parsedCookies.length > 0) {
-        const currentTime = Math.floor(Date.now() / 1000);
-        // A cookie is expired if it has an expirationDate and it's less than current time
-        const isExpired = parsedCookies.some(c => c.expirationDate && c.expirationDate < currentTime);
-        cookieHealth = isExpired ? 'EXPIRED' : 'HEALTHY';
-      } else if (parsedCookies && !Array.isArray(parsedCookies)) {
-        cookieHealth = 'HEALTHY'; // e.g. for manual login objects
+      if (Array.isArray(parsedCookies)) {
+        const now = Date.now() / 1000;
+        const hasExpired = parsedCookies.some(c => c.expirationDate && c.expirationDate < now);
+        if (hasExpired) {
+          cookieHealth = 'EXPIRED';
+        }
       }
     }
     
