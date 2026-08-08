@@ -109,27 +109,58 @@ router.get('/groupy-services', async (req, res, next) => {
   try {
     const manualToken = req.headers['x-groupy-token'];
     const tokenToUse = manualToken || process.env.GROUPY_TOKEN || '22c3abb70e2244a874bbcac4f1b1d6b03f69d7f5dd766c01608c0f582eb87acd';
-    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?token=${tokenToUse}`);
+    const updateCache = req.query.update_cache === 'true' || req.query.force === 'true';
+    const queryParams = new URLSearchParams({ token: tokenToUse });
+    if (updateCache) {
+      queryParams.append('update_cache', 'true');
+    }
+
+    const response = await fetch(`${process.env.GROUPY_API_URL || 'http://195.88.211.169:1337'}/services?${queryParams.toString()}`);
     const data = await response.json();
     const groupyServices = data.message || [];
     
     const localAccounts = await prisma.account.findMany({
-      select: { groupyId: true, cookies: true }
+      select: {
+        id: true,
+        groupyId: true,
+        cookies: true,
+        cookieHealth: true,
+        url: true,
+        loginMethod: true,
+        updatedAt: true,
+      }
     });
     
     const localMap = {};
     for (const acc of localAccounts) {
-      if (acc.cookies && (!Array.isArray(acc.cookies) || acc.cookies.length > 0)) {
-        localMap[acc.groupyId] = true;
+      if (acc.groupyId) {
+        localMap[acc.groupyId] = {
+          dbId: acc.id,
+          inDb: true,
+          hasCookies: !!(acc.cookies && (!Array.isArray(acc.cookies) || acc.cookies.length > 0)),
+          cookieHealth: acc.cookieHealth,
+          url: acc.url,
+          loginMethod: acc.loginMethod,
+          updatedAt: acc.updatedAt,
+        };
       }
     }
     
-    const mergedServices = groupyServices.map(service => ({
-      ...service,
-      cookies: localMap[service.id] ? true : false
-    }));
+    const mergedServices = groupyServices.map(service => {
+      const dbInfo = localMap[service.id];
+      return {
+        ...service,
+        inDb: dbInfo ? true : false,
+        cookies: dbInfo ? dbInfo.hasCookies : false,
+        cookieHealth: dbInfo ? dbInfo.cookieHealth : null,
+        url: dbInfo ? dbInfo.url : (service.url || ''),
+        dbUpdatedAt: dbInfo ? dbInfo.updatedAt : null,
+        loginMethod: dbInfo ? dbInfo.loginMethod : null,
+        dbId: dbInfo ? dbInfo.dbId : null,
+      };
+    });
     
-    res.json({ success: true, data: mergedServices });
+    res.json({ success: true, data: mergedServices, cacheUpdated: updateCache });
   } catch (err) {
     next(err);
   }
@@ -223,6 +254,34 @@ router.post('/groupy-services/:id/save', async (req, res, next) => {
     };
     
     res.json({ success: true, data: account });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/groupy-services/:id', async (req, res, next) => {
+  try {
+    const groupyId = String(req.params.id);
+    const existing = await prisma.account.findUnique({
+      where: { groupyId }
+    });
+    
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Account not found in database' });
+    }
+    
+    await prisma.account.delete({
+      where: { groupyId }
+    });
+    
+    res._logContext = {
+      action: 'admin_delete_groupy_service',
+      target_entity_type: 'account',
+      target_entity_id: existing.id,
+      action_type: 'delete'
+    };
+    
+    res.json({ success: true, message: 'Account deleted from database' });
   } catch (err) {
     next(err);
   }
